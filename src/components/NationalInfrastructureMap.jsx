@@ -18,22 +18,10 @@ import {
   ZoomOut,
   RotateCcw,
   Sparkles,
-  Waves
+  CheckCircle2,
+  BarChart3,
+  ExternalLink
 } from 'lucide-react';
-
-// Thematic pastel color palette inspired by the official political cartography
-const STATE_PALETTE = [
-  '#f97316', // Vibrant Orange
-  '#86efac', // Soft Green
-  '#d8b4fe', // Lilac
-  '#fef08a', // Cream Yellow
-  '#6ee7b7', // Mint Teal
-  '#fbbf24', // Amber
-  '#bae6fd', // Sky Blue
-  '#cbd5e1', // Slate
-  '#fbcfe8', // Pink
-  '#a7f3d0'  // Pale Emerald
-];
 
 // Region mapping for all Indian state IDs
 const REGION_BY_STATE_ID = {
@@ -110,6 +98,12 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
     });
   }, [activeLocation]);
 
+  // Financial expenditure realization percentage
+  const spendingProgress = useMemo(() => {
+    if (!activeStateData || !activeStateData.costLakhCr || activeStateData.costLakhCr === 0) return 45;
+    return Math.min(100, Math.round((activeStateData.expenditureLakhCr / activeStateData.costLakhCr) * 100));
+  }, [activeStateData]);
+
   // Color generator for each state matching the user's reference image
   const getStateFill = (location, index, isSelected, isHovered) => {
     if (isSelected) return "#ff9933"; // National Saffron for selected state
@@ -119,20 +113,20 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
 
     if (selectedMetric === 'count') {
       const count = data.count || 0;
-      if (count >= 140) return "#ea580c"; // Deep Amber-Orange
+      if (count >= 140) return "#f97316"; // Vibrant Orange
       if (count >= 90) return "#86efac";  // Soft Sage Green
       if (count >= 40) return "#d8b4fe";  // Lilac
       if (count >= 15) return "#fef08a";  // Cream Yellow
       return "#bae6fd";                  // Sky Blue
     } else if (selectedMetric === 'outlay') {
       const outlay = data.costLakhCr || 0;
-      if (outlay >= 3.5) return "#ea580c";
+      if (outlay >= 3.5) return "#f97316";
       if (outlay >= 2.0) return "#86efac";
       if (outlay >= 0.8) return "#d8b4fe";
       return "#fef08a";
     } else {
       const exp = data.expenditureLakhCr || 0;
-      if (exp >= 2.0) return "#166534";
+      if (exp >= 2.0) return "#16a34a";
       if (exp >= 1.0) return "#86efac";
       if (exp >= 0.4) return "#d8b4fe";
       return "#fef08a";
@@ -140,83 +134,101 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem 0' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1rem 0' }}>
       
-      {/* Official Map Header */}
-      <div className="gov-card" style={{ padding: '1rem 1.5rem', background: '#ffffff' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
+      {/* Sleek, Pleasing Top Toolbar */}
+      <div className="gov-card" style={{ padding: '1.2rem 1.5rem', background: '#ffffff', borderRadius: '8px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
-            <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '2px' }}>
-              PAIMANA Geospatial Portal ➔ <strong>{t('tabGisMap', 'National GIS Map')}</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span className="gov-badge gov-badge-navy" style={{ fontSize: '0.7rem' }}>GIS Cartography</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>486th Flash Report Database</span>
             </div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--gov-navy-dark)' }}>
-              {t('mapHeading', 'Geospatial Map of India: Central Sector Infrastructure Outlay')}
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--gov-navy-dark)', letterSpacing: '-0.02em' }}>
+              {t('mapHeading', 'National Infrastructure Spatial Analytics')}
             </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              {t('mapSubheading', 'Official Sovereign Boundary Map of 1,981 Central Sector Projects across all States & UTs.')}
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+              Interactive geographic visualization of <strong>1,981 central sector projects</strong> across India.
             </p>
           </div>
 
-          {/* Metric Selector Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#475569' }}>Metric Layer:</span>
-            <button
-              onClick={() => setSelectedMetric('count')}
-              className={`gov-btn ${selectedMetric === 'count' ? 'gov-btn-primary' : 'gov-btn-secondary'}`}
-              style={{ fontSize: '0.75rem', padding: '4px 10px' }}
-            >
-              {t('metricVolume', 'Project Volume')}
-            </button>
-            <button
-              onClick={() => setSelectedMetric('outlay')}
-              className={`gov-btn ${selectedMetric === 'outlay' ? 'gov-btn-saffron' : 'gov-btn-secondary'}`}
-              style={{ fontSize: '0.75rem', padding: '4px 10px' }}
-            >
-              {t('metricOutlay', 'Capital Outlay (₹ L Cr)')}
-            </button>
-            <button
-              onClick={() => setSelectedMetric('expenditure')}
-              className={`gov-btn ${selectedMetric === 'expenditure' ? 'gov-btn-green' : 'gov-btn-secondary'}`}
-              style={{ fontSize: '0.75rem', padding: '4px 10px' }}
-            >
-              {t('metricExp', 'Expenditure (₹ L Cr)')}
-            </button>
+          {/* Metric Selector Tabs */}
+          <div style={{
+            display: 'flex',
+            background: '#f1f5f9',
+            padding: '4px',
+            borderRadius: '6px',
+            gap: '4px'
+          }}>
+            {[
+              { id: 'count', label: t('metricVolume', 'Project Volume'), icon: Building },
+              { id: 'outlay', label: t('metricOutlay', 'Capital Outlay (₹ L Cr)'), icon: TrendingUp },
+              { id: 'expenditure', label: t('metricExp', 'Expenditure (₹ L Cr)'), icon: BarChart3 }
+            ].map(m => {
+              const Icon = m.icon;
+              const isActive = selectedMetric === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => setSelectedMetric(m.id)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 12px',
+                    borderRadius: '4px',
+                    fontSize: '0.75rem',
+                    fontWeight: isActive ? 700 : 500,
+                    background: isActive ? '#ffffff' : 'transparent',
+                    color: isActive ? 'var(--gov-navy)' : '#64748b',
+                    border: 'none',
+                    boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <Icon size={13} color={isActive ? 'var(--gov-navy)' : '#94a3b8'} />
+                  <span>{m.label}</span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
-        {/* Region Filter Bar */}
+        {/* Region Filter Chips */}
         <div style={{
           display: 'flex',
-          gap: '6px',
+          gap: '8px',
           overflowX: 'auto',
-          marginTop: '0.8rem',
-          paddingTop: '0.6rem',
-          borderTop: '1px solid var(--border-light)',
+          marginTop: '1rem',
+          paddingTop: '0.8rem',
+          borderTop: '1px solid #f1f5f9',
           alignItems: 'center'
         }}>
-          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Region:</span>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600, marginRight: '4px' }}>Filter Region:</span>
           {[
             { id: 'ALL', label: t('regionAll', 'All India (35 States & UTs)') },
-            { id: 'North', label: t('regionNorth', 'North') },
-            { id: 'West', label: t('regionWest', 'West') },
-            { id: 'South', label: t('regionSouth', 'South') },
-            { id: 'East', label: t('regionEast', 'East') },
-            { id: 'Central', label: t('regionCentral', 'Central') },
-            { id: 'North East', label: t('regionNE', 'North East (NER)') }
+            { id: 'North', label: 'North' },
+            { id: 'West', label: 'West' },
+            { id: 'South', label: 'South' },
+            { id: 'East', label: 'East' },
+            { id: 'Central', label: 'Central' },
+            { id: 'North East', label: 'North East (NER)' }
           ].map(r => (
             <button
               key={r.id}
               onClick={() => setSelectedRegion(r.id)}
               style={{
-                padding: '3px 10px',
-                borderRadius: '3px',
+                padding: '4px 12px',
+                borderRadius: '20px',
                 fontSize: '0.75rem',
                 fontWeight: selectedRegion === r.id ? 700 : 500,
-                background: selectedRegion === r.id ? 'var(--gov-navy)' : '#ffffff',
-                color: selectedRegion === r.id ? '#ffffff' : '#334155',
-                border: '1px solid var(--border-gov)',
+                background: selectedRegion === r.id ? 'var(--gov-navy)' : '#f8fafc',
+                color: selectedRegion === r.id ? '#ffffff' : '#475569',
+                border: `1px solid ${selectedRegion === r.id ? 'var(--gov-navy)' : '#e2e8f0'}`,
                 cursor: 'pointer',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                transition: 'all 0.15s ease'
               }}
             >
               {r.label}
@@ -225,46 +237,64 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
         </div>
       </div>
 
-      {/* Main Dual Grid: Authentic India SVG Map with Surrounding Oceans + State Intelligence Panel */}
+      {/* Main Spacious Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(540px, 1.45fr) minmax(360px, 1fr)',
-        gap: '1rem',
+        gridTemplateColumns: 'minmax(540px, 1.4fr) minmax(360px, 1fr)',
+        gap: '1.2rem',
         alignItems: 'start'
       }}>
         
         {/* Left Column: Official Vector Map Canvas */}
-        <div className="gov-card" style={{ padding: '1rem', background: '#ffffff', position: 'relative' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <div className="gov-card" style={{ padding: '1rem', background: '#ffffff', borderRadius: '8px', position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Compass size={16} color="var(--gov-navy)" />
-              <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--gov-navy-dark)' }}>
-                Official Sovereign Cartography of India & Surrounding Oceans
-              </h3>
+              <span style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--gov-navy-dark)' }}>
+                Sovereign Territory of India & Surrounding Oceans
+              </span>
             </div>
 
             {/* Map Zoom Controls */}
             <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
               <button
                 onClick={() => setZoomLevel(prev => Math.min(2.2, prev + 0.2))}
-                className="gov-btn gov-btn-secondary"
-                style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                  color: '#334155',
+                  cursor: 'pointer'
+                }}
                 title="Zoom in"
               >
                 <ZoomIn size={13} />
               </button>
               <button
                 onClick={() => setZoomLevel(prev => Math.max(0.8, prev - 0.2))}
-                className="gov-btn gov-btn-secondary"
-                style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                  color: '#334155',
+                  cursor: 'pointer'
+                }}
                 title="Zoom out"
               >
                 <ZoomOut size={13} />
               </button>
               <button
                 onClick={() => { setZoomLevel(1); setPanOffset({ x: 0, y: 0 }); }}
-                className="gov-btn gov-btn-secondary"
-                style={{ padding: '2px 6px', fontSize: '0.7rem' }}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '4px',
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                  color: '#334155',
+                  cursor: 'pointer'
+                }}
                 title="Reset zoom"
               >
                 <RotateCcw size={13} />
@@ -272,45 +302,38 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
             </div>
           </div>
 
-          {/* SVG Map Container: Pure Oceanic Basin with Accurate State Contours */}
+          {/* SVG Map Container: Sleek Dark Ocean Canvas matching user reference image */}
           <div style={{
             width: '100%',
-            height: '680px',
-            background: '#0d1522', // Sleek dark oceanic base matching user's reference image
+            height: '670px',
+            background: '#0c1421', // Refined deep ocean navy canvas
             borderRadius: '6px',
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 20px rgba(0,0,0,0.6)'
+            boxShadow: 'inset 0 0 30px rgba(0,0,0,0.5)'
           }}>
             <svg
               viewBox={IndiaMapData.viewBox || "0 0 612 696"}
               style={{
                 width: '100%',
                 height: '100%',
-                maxHeight: '660px',
+                maxHeight: '650px',
                 transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
                 transition: 'transform 0.2s ease',
                 cursor: 'pointer'
               }}
             >
-              {/* Subtle Oceanic Bathymetry Contours */}
-              {/* Arabian Sea Waves (West) */}
-              <path d="M 40 380 Q 90 360, 110 420 T 70 520" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="6 4" opacity="0.6" />
-              <path d="M 50 440 Q 100 420, 110 480 T 80 570" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="6 4" opacity="0.4" />
-              
-              {/* Bay of Bengal Waves (East) */}
-              <path d="M 480 400 Q 540 380, 560 450 T 520 540" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="6 4" opacity="0.6" />
-              <path d="M 490 460 Q 550 440, 570 510 T 540 600" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="6 4" opacity="0.4" />
-
-              {/* Indian Ocean Waves (South) */}
-              <path d="M 180 640 Q 300 620, 420 640 T 540 670" fill="none" stroke="#1e293b" strokeWidth="2" strokeDasharray="8 5" opacity="0.6" />
+              {/* Subtle Oceanic Bathymetric Lines */}
+              <path d="M 40 380 Q 90 360, 110 420 T 70 520" fill="none" stroke="#1e293b" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.6" />
+              <path d="M 480 400 Q 540 380, 560 450 T 520 540" fill="none" stroke="#1e293b" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.6" />
+              <path d="M 180 640 Q 300 620, 420 640 T 540 670" fill="none" stroke="#1e293b" strokeWidth="1.5" strokeDasharray="8 5" opacity="0.6" />
 
               {/* Crisp Nautical Ocean Labels */}
               {/* 1. Arabian Sea */}
-              <g opacity="0.8">
+              <g opacity="0.85">
                 <text x="85" y="470" fontSize="11" fontWeight="800" fill="#38bdf8" letterSpacing="0.15em" textAnchor="middle">
                   {t('arabianSea', 'ARABIAN SEA')}
                 </text>
@@ -320,7 +343,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               </g>
 
               {/* 2. Bay of Bengal */}
-              <g opacity="0.8">
+              <g opacity="0.85">
                 <text x="510" y="470" fontSize="11" fontWeight="800" fill="#38bdf8" letterSpacing="0.15em" textAnchor="middle">
                   {t('bayOfBengal', 'BAY OF BENGAL')}
                 </text>
@@ -330,7 +353,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               </g>
 
               {/* 3. Indian Ocean */}
-              <g opacity="0.85">
+              <g opacity="0.9">
                 <text x="310" y="665" fontSize="12" fontWeight="800" fill="#38bdf8" letterSpacing="0.18em" textAnchor="middle">
                   {t('indianOcean', 'INDIAN OCEAN')}
                 </text>
@@ -339,7 +362,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                 </text>
               </g>
 
-              {/* Official SVG State Polygons with High-Contrast Dark Outlines & Drop Shadow */}
+              {/* Official SVG State Polygons */}
               {IndiaMapData.locations.map((location, index) => {
                 const isSelected = activeStateId === location.id;
                 const isHovered = hoveredState?.id === location.id;
@@ -378,183 +401,231 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                 position: 'absolute',
                 top: '12px',
                 left: '12px',
-                background: '#ffffff',
-                border: '2px solid var(--gov-navy)',
-                borderRadius: '4px',
+                background: 'rgba(255, 255, 255, 0.98)',
+                border: '1.5px solid var(--gov-navy)',
+                borderRadius: '6px',
                 padding: '8px 12px',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
                 pointerEvents: 'none',
                 zIndex: 10,
                 fontSize: '0.8rem'
               }}>
-                <div style={{ fontWeight: 800, color: 'var(--gov-navy-dark)', fontSize: '0.95rem' }}>
+                <div style={{ fontWeight: 800, color: 'var(--gov-navy-dark)', fontSize: '0.9rem' }}>
                   {hoveredState.name}
                 </div>
                 {getStateData(hoveredState) && (
-                  <div style={{ marginTop: '2px', color: '#334155' }}>
-                    {t('projectsMonitored', 'Projects')}: <strong>{getStateData(hoveredState).count}</strong> | 
+                  <div style={{ marginTop: '2px', color: '#475569', fontSize: '0.75rem' }}>
+                    {t('projectsMonitored', 'Projects')}: <strong>{getStateData(hoveredState).count}</strong> • 
                     {t('approvedOutlay', 'Outlay')}: <strong>₹{getStateData(hoveredState).costLakhCr}L Cr</strong>
                   </div>
                 )}
-                <div style={{ fontSize: '0.7rem', color: '#166534', fontWeight: 600 }}>Click to inspect state portfolio</div>
               </div>
             )}
 
-            {/* Map Legend */}
+            {/* Minimalist Map Legend */}
             <div style={{
               position: 'absolute',
               bottom: '12px',
               left: '12px',
-              background: 'rgba(15, 23, 42, 0.9)',
-              backdropFilter: 'blur(6px)',
-              border: '1px solid #334155',
-              borderRadius: '4px',
+              background: 'rgba(15, 23, 42, 0.85)',
+              backdropFilter: 'blur(8px)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '6px',
               padding: '8px 12px',
               fontSize: '0.7rem',
               color: '#cbd5e1',
               display: 'flex',
               flexDirection: 'column',
               gap: '4px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.4)'
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)'
             }}>
-              <strong style={{ color: '#ffffff' }}>Thematic Outlay Intensity:</strong>
+              <strong style={{ color: '#ffffff', fontSize: '0.72rem' }}>Outlay Intensity:</strong>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#ea580c', display: 'inline-block', borderRadius: '2px' }}></span> Tier 1 High Outlay (&gt;₹3.5L Cr / &gt;140 Proj)
+                <span style={{ width: '12px', height: '8px', background: '#f97316', borderRadius: '2px' }}></span> High Density (&gt;₹3.5L Cr / &gt;140 Proj)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#86efac', display: 'inline-block', borderRadius: '2px' }}></span> Tier 2 Priority Zone (₹2L-₹3.5L Cr)
+                <span style={{ width: '12px', height: '8px', background: '#86efac', borderRadius: '2px' }}></span> Priority Zone (₹2L-₹3.5L Cr)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#d8b4fe', display: 'inline-block', borderRadius: '2px' }}></span> Tier 3 Growth Corridor (₹0.8L-₹2L Cr)
+                <span style={{ width: '12px', height: '8px', background: '#d8b4fe', borderRadius: '2px' }}></span> Growth Corridor (₹0.8L-₹2L Cr)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#fef08a', display: 'inline-block', borderRadius: '2px' }}></span> Standard Development Zone
+                <span style={{ width: '12px', height: '8px', background: '#fef08a', borderRadius: '2px' }}></span> Standard Development
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#ff9933', display: 'inline-block', borderRadius: '2px', border: '1px solid #ffffff' }}></span> Active Selected State
+                <span style={{ width: '12px', height: '8px', background: '#ff9933', borderRadius: '2px', border: '1px solid #ffffff' }}></span> Active Selected State
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Selected State Infrastructure Intelligence Panel */}
+        {/* Right Column: Clean, Pleasing State Infrastructure Panel */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
           {/* Active State Profile Card */}
-          <div className="gov-card">
-            <div className="gov-card-header" style={{ background: '#003366', color: '#ffffff' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <MapPin size={16} color="#ff9933" />
-                <h4 style={{ color: '#ffffff', fontSize: '1rem', fontWeight: 700 }}>
-                  {activeLocation.name} • {t('stateProfile', 'Infrastructure Profile')}
-                </h4>
+          <div className="gov-card" style={{ borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{
+              background: 'linear-gradient(135deg, #002244 0%, #003366 100%)',
+              color: '#ffffff',
+              padding: '1.2rem 1.4rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <div style={{ fontSize: '0.75rem', color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  State Infrastructure Profile
+                </div>
+                <h3 style={{ color: '#ffffff', fontSize: '1.3rem', fontWeight: 800, marginTop: '2px' }}>
+                  {activeLocation.name}
+                </h3>
               </div>
               <span style={{
                 background: '#ff9933',
-                color: '#000000',
+                color: '#002244',
                 fontWeight: 800,
-                fontSize: '0.7rem',
-                padding: '2px 8px',
-                borderRadius: '3px'
+                fontSize: '0.75rem',
+                padding: '4px 10px',
+                borderRadius: '20px',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
               }}>
-                {activeStateData.count || 0} {t('projectsMonitored', 'Projects Monitored')}
+                {activeStateData.count || 0} Projects Monitored
               </span>
             </div>
 
-            <div style={{ padding: '1rem' }}>
-              {/* Financial Metrics Summary */}
+            <div style={{ padding: '1.2rem' }}>
+              {/* Financial Metrics Cards */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
-                gap: '8px',
-                background: '#f8fafc',
-                border: '1px solid var(--border-light)',
-                padding: '10px',
-                borderRadius: '4px',
+                gap: '10px',
                 marginBottom: '1rem'
               }}>
-                <div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{t('approvedOutlay', 'Approved Capital Outlay')}</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--gov-navy-dark)' }}>
-                    ₹{activeStateData.costLakhCr} <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Lakh Cr</span>
+                <div style={{
+                  background: '#fffbeb',
+                  border: '1px solid #fef3c7',
+                  borderRadius: '6px',
+                  padding: '12px'
+                }}>
+                  <div style={{ fontSize: '0.72rem', color: '#92400e', fontWeight: 600, textTransform: 'uppercase' }}>
+                    Approved Outlay
+                  </div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#78350f', marginTop: '2px' }}>
+                    ₹{activeStateData.costLakhCr} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>L Cr</span>
                   </div>
                 </div>
 
-                <div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{t('cumulativeExp', 'Cumulative Expenditure')}</div>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#166534' }}>
-                    ₹{activeStateData.expenditureLakhCr} <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Lakh Cr</span>
+                <div style={{
+                  background: '#f0fdf4',
+                  border: '1px solid #dcfce7',
+                  borderRadius: '6px',
+                  padding: '12px'
+                }}>
+                  <div style={{ fontSize: '0.72rem', color: '#166534', fontWeight: 600, textTransform: 'uppercase' }}>
+                    Cumulative Exp.
+                  </div>
+                  <div style={{ fontSize: '1.3rem', fontWeight: 800, color: '#14532d', marginTop: '2px' }}>
+                    ₹{activeStateData.expenditureLakhCr} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>L Cr</span>
                   </div>
                 </div>
               </div>
 
-              <div style={{ fontSize: '0.8rem', marginBottom: '0.8rem', color: '#334155' }}>
-                <strong>{t('keySector', 'Key Sectoral Focus')}:</strong> <span style={{ color: 'var(--gov-navy)' }}>{activeStateData.topSector}</span>
+              {/* Progress Bar */}
+              <div style={{ marginBottom: '1.2rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '4px' }}>
+                  <span style={{ color: '#64748b' }}>Financial Realization Rate</span>
+                  <strong style={{ color: '#166534' }}>{spendingProgress}% Outlay Spent</strong>
+                </div>
+                <div style={{ width: '100%', height: '7px', background: '#e2e8f0', borderRadius: '10px', overflow: 'hidden' }}>
+                  <div style={{ width: `${spendingProgress}%`, height: '100%', background: '#16a34a', borderRadius: '10px' }} />
+                </div>
+              </div>
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: '8px 12px',
+                background: '#f8fafc',
+                borderRadius: '6px',
+                border: '1px solid #e2e8f0',
+                marginBottom: '1.2rem',
+                fontSize: '0.8rem'
+              }}>
+                <span style={{ color: '#64748b' }}>Primary Sector Focus:</span>
+                <strong style={{ color: 'var(--gov-navy)' }}>{activeStateData.topSector}</strong>
               </div>
 
               {/* Projects in this State */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                   <strong style={{ fontSize: '0.85rem', color: 'var(--gov-navy-dark)' }}>
-                    Central Sector Projects in {activeLocation.name} ({stateProjects.length})
+                    Monitored Mega Projects ({stateProjects.length})
                   </strong>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>486th Flash Report</span>
                 </div>
 
                 {stateProjects.length === 0 ? (
                   <div style={{
-                    padding: '12px',
+                    padding: '16px',
                     background: '#f8fafc',
-                    border: '1px dashed var(--border-gov)',
-                    borderRadius: '4px',
+                    border: '1px dashed #cbd5e1',
+                    borderRadius: '6px',
                     fontSize: '0.8rem',
                     color: '#64748b',
-                    textAlign: 'center'
+                    textAlign: 'center',
+                    lineHeight: '1.4'
                   }}>
-                    {activeStateData.count} central sector projects are monitored in {activeLocation.name} in the 486th Flash Report. (Use the <strong>Projects Registry</strong> tab to search all 1,981 project lines).
+                    {activeStateData.count} central sector projects are monitored in {activeLocation.name} in Table 2 of the 486th Flash Report.
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '340px', overflowY: 'auto' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '320px', overflowY: 'auto', paddingRight: '4px' }}>
                     {stateProjects.map(p => (
                       <div
                         key={p.id}
                         onClick={() => onSelectProject(p)}
                         style={{
-                          padding: '8px 10px',
+                          padding: '10px 12px',
                           background: '#ffffff',
-                          border: '1px solid var(--border-light)',
-                          borderRadius: '3px',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '6px',
                           cursor: 'pointer',
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          gap: '8px'
+                          gap: '10px',
+                          transition: 'all 0.15s ease'
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.borderColor = 'var(--gov-blue-accent)'}
-                        onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-light)'}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.borderColor = 'var(--gov-navy)';
+                          e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,34,68,0.08)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.borderColor = '#e2e8f0';
+                          e.currentTarget.style.boxShadow = 'none';
+                        }}
                       >
                         <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.75rem' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.72rem', marginBottom: '2px' }}>
                             <span style={{ fontFamily: 'var(--font-mono)', fontWeight: 700, color: 'var(--gov-navy)' }}>{p.id}</span>
-                            <span style={{ color: '#64748b' }}>• {p.agency}</span>
+                            <span style={{ color: '#94a3b8' }}>•</span>
+                            <span style={{ color: '#64748b', fontWeight: 600 }}>{p.agency}</span>
                           </div>
-                          <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#0f172a', lineHeight: '1.25' }}>
+                          <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#0f172a', lineHeight: '1.3' }}>
                             {p.name}
                           </div>
-                          <div style={{ fontSize: '0.7rem', color: '#475569', marginTop: '2px' }}>
-                            Cost: <strong>₹{p.originalCostCr.toLocaleString()} Cr</strong> | Progress: <strong style={{ color: '#166534' }}>{p.physicalProgress}%</strong>
+                          <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '4px' }}>
+                            Cost: <strong>₹{p.originalCostCr.toLocaleString()} Cr</strong> | Physical Progress: <strong style={{ color: '#16a34a' }}>{p.physicalProgress}%</strong>
                           </div>
                         </div>
 
-                        <div style={{ textAlign: 'right' }}>
-                          <span className={`gov-badge gov-badge-${p.riskLevel.toLowerCase()}`}>
+                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                          <span className={`gov-badge gov-badge-${p.riskLevel.toLowerCase()}`} style={{ fontSize: '0.65rem' }}>
                             {p.riskLevel}
                           </span>
-                          <button
-                            className="gov-btn gov-btn-secondary"
-                            style={{ padding: '2px 6px', fontSize: '0.65rem', marginTop: '4px', display: 'block' }}
-                          >
-                            {t('viewDossier', 'Dossier ➔')}
-                          </button>
+                          <span style={{ fontSize: '0.7rem', color: 'var(--gov-navy)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '2px' }}>
+                            Dossier <ArrowRight size={11} />
+                          </span>
                         </div>
                       </div>
                     ))}
