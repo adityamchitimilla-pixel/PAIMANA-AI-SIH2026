@@ -12,7 +12,8 @@ import {
   Bot,
   Globe,
   Bell,
-  ChevronDown
+  ChevronDown,
+  Briefcase
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSearch }) {
@@ -24,6 +25,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
     { id: 'early-warning', label: t('tabEarlyWarning', 'AI Early Warning Radar'), icon: Activity, badge: 'AI Model' },
     { id: 'gis-map', label: t('tabGisMap', 'National GIS Map'), icon: MapPin, badge: 'Interactive' },
     { id: 'projects', label: t('tabProjects', 'Projects Registry (1,981)'), icon: Layers },
+    { id: 'tenders', label: t('tabTenders', 'E-Tenders & Bidding'), icon: Briefcase, badge: 'CPPP' },
     { id: 'benchmarking', label: t('tabBenchmarking', 'Benchmarking & Drivers'), icon: BarChart3 },
     { id: 'north-east', label: t('tabNorthEast', 'NER Special Focus (229)'), icon: MapPin },
     { id: 'cuf-simulator', label: t('tabCuf', 'CUF & What-If Sandbox'), icon: Cpu },

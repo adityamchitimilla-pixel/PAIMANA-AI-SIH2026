@@ -38,6 +38,7 @@ export const TRANSLATIONS = {
     tabBenchmarking: "Benchmarking & Drivers",
     tabNorthEast: "NER Special Focus (229)",
     tabCuf: "CUF & What-If Sandbox",
+    tabTenders: "E-Tenders & Bidding",
     tabAssistant: "Drishti AI Assistant",
 
     // Executive KPIs
@@ -101,6 +102,7 @@ export const TRANSLATIONS = {
     tabBenchmarking: "बेंचमार्किंग और कारण विश्लेषण",
     tabNorthEast: "पूर्वोत्तर विशेष फोकस (229)",
     tabCuf: "सीयूएफ और सिमुलेटर",
+    tabTenders: "ई-निविदा एवं बोली",
     tabAssistant: "दृष्टि एआई सहायक",
 
     // Executive KPIs

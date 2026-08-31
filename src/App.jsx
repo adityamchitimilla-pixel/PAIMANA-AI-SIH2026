@@ -9,6 +9,7 @@ import BenchmarkingAnalytics from './components/BenchmarkingAnalytics';
 import NorthEastFocus from './components/NorthEastFocus';
 import CUFSimulator from './components/CUFSimulator';
 import DrishtiAIAssistant from './components/DrishtiAIAssistant';
+import TendersBiddingPlatform from './components/TendersBiddingPlatform';
 import ProjectDetailModal from './components/ProjectDetailModal';
 import ReportGeneratorModal from './components/ReportGeneratorModal';
 import SearchModal from './components/SearchModal';
@@ -74,6 +75,10 @@ function MainAppContent() {
           <ProjectExplorer 
             onSelectProject={(p) => setSelectedProject(p)} 
           />
+        )}
+
+        {activeTab === 'tenders' && (
+          <TendersBiddingPlatform />
         )}
 
         {activeTab === 'benchmarking' && (
