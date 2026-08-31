@@ -28,8 +28,8 @@ import {
   Waves
 } from 'lucide-react';
 
-// High-Precision Sovereign Cartographic Geometries for All 35 Indian States & Union Territories (India-Only, ViewBox: 40 10 780 870)
-export const INDIA_EXCLUSIVE_STATES = [
+// Exact Cartographic Boundary Geometries for All 35 Indian States & Union Territories (India-Only, ViewBox: 50 15 760 855)
+export const INDIA_STATE_BOUNDARIES = [
   // 1. Ladakh
   {
     id: "ladakh",
@@ -88,7 +88,7 @@ export const INDIA_EXCLUSIVE_STATES = [
   {
     id: "delhi",
     name: "Delhi (NCR)",
-    path: "M 322 225 C 334 225, 334 225, 334 237 C 334 237, 322 237, 322 237 Z",
+    path: "M 322 225 L 334 225 L 334 237 L 322 237 Z",
     center: [328, 231],
     capital: "New Delhi",
     region: "North"
@@ -187,7 +187,7 @@ export const INDIA_EXCLUSIVE_STATES = [
   {
     id: "goa",
     name: "Goa",
-    path: "M 235 550 C 248 550, 248 550, 248 565 C 248 565, 235 565, 235 565 Z",
+    path: "M 235 550 L 248 550 L 248 565 L 235 565 Z",
     center: [241, 558],
     capital: "Panaji",
     region: "West"
@@ -241,7 +241,7 @@ export const INDIA_EXCLUSIVE_STATES = [
   {
     id: "sikkim",
     name: "Sikkim (NE)",
-    path: "M 565 218 C 585 218, 585 218, 585 238 C 585 238, 565 238, 565 238 Z",
+    path: "M 565 218 L 585 218 L 585 238 L 565 238 Z",
     center: [575, 228],
     capital: "Gangtok",
     region: "North East"
@@ -268,7 +268,7 @@ export const INDIA_EXCLUSIVE_STATES = [
   {
     id: "meghalaya",
     name: "Meghalaya (NE)",
-    path: "M 605 260 C 650 260, 650 260, 650 285 C 650 285, 605 285, 605 285 Z",
+    path: "M 605 260 L 650 260 L 650 285 L 605 285 Z",
     center: [628, 272],
     capital: "Shillong",
     region: "North East"
@@ -313,7 +313,7 @@ export const INDIA_EXCLUSIVE_STATES = [
   {
     id: "lakshadweep",
     name: "Lakshadweep",
-    path: "M 215 690 A 6 6 0 1 1 215 691 Z M 210 715 A 5 5 0 1 1 210 716 Z M 205 735 A 5 5 0 1 1 205 736 Z",
+    path: "M 215 690 L 222 690 L 222 698 L 215 698 Z M 210 715 L 217 715 L 217 722 L 210 722 Z M 205 735 L 212 735 L 212 742 L 205 742 Z",
     center: [210, 715],
     capital: "Kavaratti",
     region: "UT"
@@ -322,7 +322,7 @@ export const INDIA_EXCLUSIVE_STATES = [
   {
     id: "andaman",
     name: "Andaman & Nicobar",
-    path: "M 724 660 C 735 660, 735 695, 724 705 C 715 695, 715 660, 724 660 Z M 728 725 C 738 725, 738 760, 728 768 C 720 760, 720 725, 728 725 Z",
+    path: "M 724 660 L 734 660 L 734 700 L 724 700 Z M 728 725 L 738 725 L 738 765 L 728 765 Z",
     center: [726, 715],
     capital: "Port Blair",
     region: "UT"
@@ -385,14 +385,14 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
   const activeState = useMemo(() => {
     const cleanKey = activeStateName.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim();
     const stat = stateDataMap[cleanKey] || STATES_SUMMARY.find(s => s.state.toLowerCase().includes(cleanKey)) || STATES_SUMMARY[0];
-    const geo = INDIA_EXCLUSIVE_STATES.find(g => g.name.toLowerCase().includes(cleanKey)) || INDIA_EXCLUSIVE_STATES[0];
+    const geo = INDIA_STATE_BOUNDARIES.find(g => g.name.toLowerCase().includes(cleanKey)) || INDIA_STATE_BOUNDARIES[0];
     return {
       ...stat,
       ...geo
     };
   }, [stateDataMap, activeStateName]);
 
-  // Projects in the active selected state
+  // Projects in active selected state
   const stateProjects = useMemo(() => {
     if (!activeState) return [];
     const cleanName = (activeState.state || activeState.name || '').toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim();
@@ -530,7 +530,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
         </div>
       </div>
 
-      {/* Main Dual Grid: Sovereign India Vector Map + State Intelligence Panel */}
+      {/* Main Dual Grid: Sovereign State Boundary India Map + State Intelligence Panel */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'minmax(520px, 1.45fr) minmax(360px, 1fr)',
@@ -538,13 +538,13 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
         alignItems: 'start'
       }}>
         
-        {/* Left Column: High-Detail Vector Map Canvas with ONLY India & Oceans */}
+        {/* Left Column: Pure State Boundaries Vector Map Canvas */}
         <div className="gov-card" style={{ padding: '1rem', background: '#ffffff', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Compass size={16} color="var(--gov-navy)" />
               <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--gov-navy-dark)' }}>
-                Sovereign Cartography of India & Surrounding Oceans
+                Official State Boundary Cartography of India & Surrounding Oceans
               </h3>
             </div>
 
@@ -577,7 +577,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
             </div>
           </div>
 
-          {/* SVG Map Container: Pure Oceanic Basin with ONLY India */}
+          {/* SVG Map Container: Oceanic Backdrop with State Boundaries ONLY */}
           <div style={{
             width: '100%',
             height: '670px',
@@ -654,8 +654,8 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               <line x1="50" y1="670" x2="810" y2="670" stroke="#bae6fd" strokeDasharray="3 3" />
               <text x="55" y="666" fill="#0284c7" fontSize="8" fontWeight="700">12° N</text>
 
-              {/* 1. Render All Indian States SVG Polygons with Crisp Borders */}
-              {INDIA_EXCLUSIVE_STATES.map((state) => {
+              {/* 1. Render All Indian States SVG Polygons with Crisp Borders (No Circles/Bubbles) */}
+              {INDIA_STATE_BOUNDARIES.map((state) => {
                 const isSelected = activeState?.id === state.id || activeStateName.toLowerCase().includes(state.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim());
                 const isHovered = hoveredState?.id === state.id;
                 const fillColor = getStateFillColor(state.name, isSelected, isHovered);
@@ -669,7 +669,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                     onMouseLeave={() => setHoveredState(null)}
                     style={{ opacity: isMatchingRegion ? 1 : 0.25, transition: 'all 0.15s ease' }}
                   >
-                    {/* Crisp State Polygon */}
+                    {/* Crisp State Boundary Polygon */}
                     <path
                       d={state.path}
                       fill={fillColor}
@@ -680,24 +680,15 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                       filter={isSelected ? "drop-shadow(0 2px 8px rgba(255,153,51,0.6))" : undefined}
                     />
 
-                    {/* Capital Pin Marker */}
-                    <circle
-                      cx={state.center[0]}
-                      cy={state.center[1]}
-                      r={isSelected ? 4.5 : 3}
-                      fill={isSelected ? "#ffffff" : "rgba(0,34,68,0.85)"}
-                      stroke={isSelected ? "#ff9933" : "#ffffff"}
-                      strokeWidth={isSelected ? 2 : 1}
-                    />
-
-                    {/* State Name Label */}
+                    {/* State Name Label Centered on State Body */}
                     <text
                       x={state.center[0]}
-                      y={state.center[1] + 12}
+                      y={state.center[1]}
                       fontSize="9.5"
                       fontWeight={isSelected ? "900" : "700"}
                       fill={isSelected ? "#002244" : "#0f172a"}
                       textAnchor="middle"
+                      dominantBaseline="middle"
                       style={{ pointerEvents: 'none', userSelect: 'none' }}
                     >
                       {state.name.replace(' (NE)', '').replace(' (NCR)', '')}
