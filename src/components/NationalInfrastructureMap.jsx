@@ -1,5 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLanguage } from '../context/LanguageContext';
+import L from 'leaflet';
 import { 
   STATES_SUMMARY, 
   DETAILED_PROJECTS, 
@@ -25,352 +26,149 @@ import {
   Sparkles,
   CheckCircle2,
   Table,
-  Waves
+  Waves,
+  Navigation
 } from 'lucide-react';
 
-// Official Detailed SVG Geometries for all Indian States & Union Territories (Projection ViewBox: 0 0 840 880)
-export const INDIA_STATES_SVG = [
-  // 1. Ladakh
-  {
-    id: "ladakh",
-    name: "Ladakh",
-    path: "M 290 40 L 350 35 L 395 65 L 415 110 L 390 145 L 345 135 L 325 115 L 305 100 L 290 70 Z",
-    center: [350, 85],
-    capital: "Leh",
-    region: "North"
-  },
-  // 2. Jammu & Kashmir
-  {
-    id: "jk",
-    name: "Jammu and Kashmir",
-    path: "M 240 75 L 290 70 L 305 100 L 325 115 L 310 140 L 265 145 L 235 120 L 235 90 Z",
-    center: [270, 110],
-    capital: "Srinagar",
-    region: "North"
-  },
-  // 3. Himachal Pradesh
-  {
-    id: "hp",
-    name: "Himachal Pradesh",
-    path: "M 310 140 L 345 135 L 360 160 L 345 185 L 315 190 L 300 165 Z",
-    center: [330, 160],
-    capital: "Shimla",
-    region: "North"
-  },
-  // 4. Punjab
-  {
-    id: "punjab",
-    name: "Punjab",
-    path: "M 255 148 L 300 165 L 295 200 L 265 215 L 245 185 Z",
-    center: [270, 180],
-    capital: "Chandigarh",
-    region: "North"
-  },
-  // 5. Uttarakhand
-  {
-    id: "uk",
-    name: "Uttarakhand",
-    path: "M 345 185 L 380 170 L 405 200 L 375 225 L 345 205 Z",
-    center: [375, 195],
-    capital: "Dehradun",
-    region: "North"
-  },
-  // 6. Haryana
-  {
-    id: "haryana",
-    name: "Haryana",
-    path: "M 295 200 L 335 195 L 330 240 L 290 250 L 275 220 Z",
-    center: [305, 220],
-    capital: "Chandigarh",
-    region: "North"
-  },
-  // 7. Delhi (NCR)
-  {
-    id: "delhi",
-    name: "Delhi (NCR)",
-    path: "M 322 225 L 334 225 L 334 237 L 322 237 Z",
-    center: [328, 231],
-    capital: "New Delhi",
-    region: "North"
-  },
-  // 8. Rajasthan
-  {
-    id: "rajasthan",
-    name: "Rajasthan",
-    path: "M 185 210 L 265 215 L 290 250 L 285 320 L 245 365 L 180 340 L 155 270 L 175 230 Z",
-    center: [225, 280],
-    capital: "Jaipur",
-    region: "North"
-  },
-  // 9. Uttar Pradesh
-  {
-    id: "up",
-    name: "Uttar Pradesh",
-    path: "M 330 240 L 375 225 L 435 240 L 490 260 L 485 315 L 420 330 L 370 335 L 340 300 L 335 260 Z",
-    center: [405, 275],
-    capital: "Lucknow",
-    region: "North"
-  },
-  // 10. Bihar
-  {
-    id: "bihar",
-    name: "Bihar",
-    path: "M 490 260 L 550 265 L 565 305 L 515 320 L 485 315 Z",
-    center: [525, 290],
-    capital: "Patna",
-    region: "East"
-  },
-  // 11. West Bengal
-  {
-    id: "wb",
-    name: "West Bengal",
-    path: "M 550 265 L 575 250 L 565 320 L 585 365 L 555 425 L 525 390 L 540 335 L 565 305 Z",
-    center: [555, 360],
-    capital: "Kolkata",
-    region: "East"
-  },
-  // 12. Jharkhand
-  {
-    id: "jharkhand",
-    name: "Jharkhand",
-    path: "M 485 315 L 540 335 L 525 390 L 475 385 L 465 340 Z",
-    center: [500, 350],
-    capital: "Ranchi",
-    region: "East"
-  },
-  // 13. Odisha
-  {
-    id: "odisha",
-    name: "Odisha",
-    path: "M 475 385 L 525 390 L 540 440 L 495 490 L 450 460 L 455 410 Z",
-    center: [495, 435],
-    capital: "Bhubaneswar",
-    region: "East"
-  },
-  // 14. Chhattisgarh
-  {
-    id: "chhattisgarh",
-    name: "Chhattisgarh",
-    path: "M 420 330 L 465 340 L 455 410 L 450 460 L 420 500 L 400 450 L 410 380 Z",
-    center: [430, 420],
-    capital: "Raipur",
-    region: "Central"
-  },
-  // 15. Madhya Pradesh
-  {
-    id: "mp",
-    name: "Madhya Pradesh",
-    path: "M 285 320 L 370 335 L 420 330 L 410 380 L 380 415 L 290 410 L 260 370 Z",
-    center: [340, 365],
-    capital: "Bhopal",
-    region: "Central"
-  },
-  // 16. Gujarat
-  {
-    id: "gujarat",
-    name: "Gujarat",
-    path: "M 130 310 L 180 340 L 245 365 L 225 435 L 180 430 L 160 455 L 125 415 L 150 375 L 105 360 Z",
-    center: [175, 385],
-    capital: "Gandhinagar",
-    region: "West"
-  },
-  // 17. Maharashtra
-  {
-    id: "maharashtra",
-    name: "Maharashtra",
-    path: "M 225 435 L 290 410 L 380 415 L 400 450 L 380 520 L 310 535 L 245 525 L 205 480 Z",
-    center: [300, 475],
-    capital: "Mumbai",
-    region: "West"
-  },
-  // 18. Goa
-  {
-    id: "goa",
-    name: "Goa",
-    path: "M 235 550 L 248 550 L 248 565 L 235 565 Z",
-    center: [241, 558],
-    capital: "Panaji",
-    region: "West"
-  },
-  // 19. Telangana
-  {
-    id: "telangana",
-    name: "Telangana",
-    path: "M 340 500 L 400 490 L 390 560 L 330 565 L 325 525 Z",
-    center: [360, 530],
-    capital: "Hyderabad",
-    region: "South"
-  },
-  // 20. Andhra Pradesh
-  {
-    id: "ap",
-    name: "Andhra Pradesh",
-    path: "M 390 560 L 450 490 L 470 530 L 420 635 L 350 645 L 350 600 L 330 565 Z",
-    center: [405, 595],
-    capital: "Amaravati",
-    region: "South"
-  },
-  // 21. Karnataka
-  {
-    id: "karnataka",
-    name: "Karnataka",
-    path: "M 245 525 L 310 535 L 330 565 L 350 600 L 330 670 L 275 660 L 245 590 Z",
-    center: [290, 600],
-    capital: "Bengaluru",
-    region: "South"
-  },
-  // 22. Kerala
-  {
-    id: "kerala",
-    name: "Kerala",
-    path: "M 275 660 L 300 675 L 315 755 L 295 765 L 275 700 Z",
-    center: [295, 715],
-    capital: "Thiruvananthapuram",
-    region: "South"
-  },
-  // 23. Tamil Nadu
-  {
-    id: "tn",
-    name: "Tamil Nadu",
-    path: "M 330 670 L 350 645 L 420 635 L 390 730 L 335 770 L 315 755 L 300 675 Z",
-    center: [355, 705],
-    capital: "Chennai",
-    region: "South"
-  },
-  // 24. Sikkim (NE)
-  {
-    id: "sikkim",
-    name: "Sikkim (NE)",
-    path: "M 565 220 L 585 220 L 585 240 L 565 240 Z",
-    center: [575, 230],
-    capital: "Gangtok",
-    region: "North East"
-  },
-  // 25. Assam (NE)
-  {
-    id: "assam",
-    name: "Assam (NE)",
-    path: "M 625 245 L 685 235 L 725 235 L 705 270 L 650 280 L 620 280 L 605 260 Z",
-    center: [660, 255],
-    capital: "Dispur",
-    region: "North East"
-  },
-  // 26. Arunachal Pradesh (NE)
-  {
-    id: "arunachal",
-    name: "Arunachal Pradesh (NE)",
-    path: "M 625 210 L 690 195 L 755 210 L 765 245 L 725 235 L 685 235 L 625 245 Z",
-    center: [700, 215],
-    capital: "Itanagar",
-    region: "North East"
-  },
-  // 27. Meghalaya (NE)
-  {
-    id: "meghalaya",
-    name: "Meghalaya (NE)",
-    path: "M 605 260 L 650 260 L 650 285 L 605 285 Z",
-    center: [628, 272],
-    capital: "Shillong",
-    region: "North East"
-  },
-  // 28. Nagaland (NE)
-  {
-    id: "nagaland",
-    name: "Nagaland (NE)",
-    path: "M 725 235 L 750 250 L 735 280 L 710 265 Z",
-    center: [730, 258],
-    capital: "Kohima",
-    region: "North East"
-  },
-  // 29. Manipur (NE)
-  {
-    id: "manipur",
-    name: "Manipur (NE)",
-    path: "M 710 280 L 735 280 L 730 320 L 705 315 Z",
-    center: [720, 300],
-    capital: "Imphal",
-    region: "North East"
-  },
-  // 30. Mizoram (NE)
-  {
-    id: "mizoram",
-    name: "Mizoram (NE)",
-    path: "M 685 315 L 710 315 L 700 365 L 675 360 Z",
-    center: [690, 340],
-    capital: "Aizawl",
-    region: "North East"
-  },
-  // 31. Tripura (NE)
-  {
-    id: "tripura",
-    name: "Tripura (NE)",
-    path: "M 655 315 L 680 315 L 675 350 L 650 345 Z",
-    center: [665, 330],
-    capital: "Agartala",
-    region: "North East"
-  },
-  // 32. Lakshadweep Archipelago (Arabian Sea)
-  {
-    id: "lakshadweep",
-    name: "Lakshadweep",
-    path: "M 220 680 L 228 680 L 228 690 L 220 690 Z M 215 705 L 223 705 L 223 715 L 215 715 Z M 210 725 L 218 725 L 218 735 L 210 735 Z",
-    center: [220, 705],
-    capital: "Kavaratti",
-    region: "UT"
-  },
-  // 33. Andaman & Nicobar (Bay of Bengal)
-  {
-    id: "andaman",
-    name: "Andaman & Nicobar",
-    path: "M 720 660 L 732 660 L 732 705 L 720 705 Z M 724 725 L 734 725 L 734 765 L 724 765 Z",
-    center: [728, 710],
-    capital: "Port Blair",
-    region: "UT"
-  }
+// Exact GPS Centroids for all 35 Indian States & Union Territories
+export const INDIA_STATES_GPS = [
+  { id: "maharashtra", name: "Maharashtra", lat: 19.7515, lng: 75.7139, capital: "Mumbai", region: "West" },
+  { id: "up", name: "Uttar Pradesh", lat: 26.8467, lng: 80.9462, capital: "Lucknow", region: "North" },
+  { id: "ap", name: "Andhra Pradesh", lat: 15.9129, lng: 79.7400, capital: "Amaravati", region: "South" },
+  { id: "bihar", name: "Bihar", lat: 25.0961, lng: 85.3131, capital: "Patna", region: "East" },
+  { id: "mp", name: "Madhya Pradesh", lat: 22.9734, lng: 78.6569, capital: "Bhopal", region: "Central" },
+  { id: "gujarat", name: "Gujarat", lat: 22.2587, lng: 71.1924, capital: "Gandhinagar", region: "West" },
+  { id: "karnataka", name: "Karnataka", lat: 15.3173, lng: 75.7139, capital: "Bengaluru", region: "South" },
+  { id: "odisha", name: "Odisha", lat: 20.9517, lng: 85.0985, capital: "Bhubaneswar", region: "East" },
+  { id: "jharkhand", name: "Jharkhand", lat: 23.6102, lng: 85.2799, capital: "Ranchi", region: "East" },
+  { id: "telangana", name: "Telangana", lat: 18.1124, lng: 79.0193, capital: "Hyderabad", region: "South" },
+  { id: "assam", name: "Assam (NE)", lat: 26.2006, lng: 92.9376, capital: "Dispur", region: "North East" },
+  { id: "wb", name: "West Bengal", lat: 22.9868, lng: 87.8550, capital: "Kolkata", region: "East" },
+  { id: "rajasthan", name: "Rajasthan", lat: 27.0238, lng: 74.2179, capital: "Jaipur", region: "North" },
+  { id: "chhattisgarh", name: "Chhattisgarh", lat: 21.2787, lng: 81.8661, capital: "Raipur", region: "Central" },
+  { id: "tn", name: "Tamil Nadu", lat: 11.1271, lng: 78.6569, capital: "Chennai", region: "South" },
+  { id: "punjab", name: "Punjab", lat: 31.1471, lng: 75.3412, capital: "Chandigarh", region: "North" },
+  { id: "uk", name: "Uttarakhand", lat: 30.0668, lng: 79.0193, capital: "Dehradun", region: "North" },
+  { id: "jk", name: "Jammu and Kashmir", lat: 33.7782, lng: 76.5762, capital: "Srinagar", region: "North" },
+  { id: "manipur", name: "Manipur (NE)", lat: 24.6637, lng: 93.9063, capital: "Imphal", region: "North East" },
+  { id: "hp", name: "Himachal Pradesh", lat: 31.1048, lng: 77.1734, capital: "Shimla", region: "North" },
+  { id: "kerala", name: "Kerala", lat: 10.8505, lng: 76.2711, capital: "Thiruvananthapuram", region: "South" },
+  { id: "arunachal", name: "Arunachal Pradesh (NE)", lat: 28.2180, lng: 94.7278, capital: "Itanagar", region: "North East" },
+  { id: "mizoram", name: "Mizoram (NE)", lat: 23.1645, lng: 92.9376, capital: "Aizawl", region: "North East" },
+  { id: "nagaland", name: "Nagaland (NE)", lat: 26.1584, lng: 94.5624, capital: "Kohima", region: "North East" },
+  { id: "delhi", name: "Delhi (NCR)", lat: 28.7041, lng: 77.1025, capital: "New Delhi", region: "North" },
+  { id: "meghalaya", name: "Meghalaya (NE)", lat: 25.4670, lng: 91.3662, capital: "Shillong", region: "North East" },
+  { id: "sikkim", name: "Sikkim (NE)", lat: 27.5330, lng: 88.5122, capital: "Gangtok", region: "North East" },
+  { id: "tripura", name: "Tripura (NE)", lat: 23.9408, lng: 91.9882, capital: "Agartala", region: "North East" },
+  { id: "goa", name: "Goa", lat: 15.2993, lng: 74.1240, capital: "Panaji", region: "West" },
+  { id: "puducherry", name: "Puducherry", lat: 11.9416, lng: 79.8083, capital: "Puducherry", region: "South" },
+  { id: "dnh", name: "Dadra & Nagar Haveli", lat: 20.1809, lng: 73.0169, capital: "Silvassa", region: "West" },
+  { id: "andaman", name: "Andaman & Nicobar", lat: 11.7401, lng: 92.6586, capital: "Port Blair", region: "UT" },
+  { id: "ladakh", name: "Ladakh", lat: 34.1526, lng: 77.5771, capital: "Leh", region: "North" },
+  { id: "lakshadweep", name: "Lakshadweep", lat: 10.5667, lng: 72.6417, capital: "Kavaratti", region: "UT" },
+  { id: "haryana", name: "Haryana", lat: 29.0588, lng: 76.0856, capital: "Chandigarh", region: "North" }
 ];
 
-// Strategic Multi-State Corridors Data
-export const STRATEGIC_CORRIDORS_DATA = [
+// Strategic Multi-State Mega Corridors with Exact GPS Polylines
+export const STRATEGIC_CORRIDORS_GPS = [
   {
     id: "bullet-train",
     name: "Mumbai - Ahmedabad High Speed Rail (508 KM)",
     color: "#0284c7",
-    points: [[300, 475], [240, 430], [200, 390], [175, 385]],
+    agency: "NHSRCL",
     costCr: 108000,
     progress: "59.86%",
-    agency: "NHSRCL"
+    speed: "320 km/h Bullet Train",
+    waypoints: [
+      [19.0760, 72.8777], // Mumbai BKC
+      [19.2183, 72.9781], // Thane
+      [19.4564, 72.7925], // Virar
+      [19.8036, 72.7523], // Boisar
+      [20.3712, 72.9044], // Vapi
+      [20.8038, 72.9566], // Bilimora
+      [21.1702, 72.8311], // Surat
+      [21.7051, 72.9959], // Bharuch
+      [22.3072, 73.1812], // Vadodara
+      [22.5645, 72.9289], // Anand
+      [23.0225, 72.5714], // Ahmedabad
+      [23.0805, 72.5850]  // Sabarmati
+    ]
   },
   {
     id: "wdfc",
-    name: "Western Dedicated Freight Corridor (1504 KM)",
+    name: "Western Dedicated Freight Corridor (1,504 KM)",
     color: "#ea580c",
-    points: [[328, 231], [270, 250], [225, 280], [175, 385], [300, 475]],
+    agency: "DFCCIL",
     costCr: 124005,
     progress: "96.00%",
-    agency: "DFCCIL"
+    speed: "Heavy Haul Electric Freight",
+    waypoints: [
+      [28.5500, 77.5500], // Dadri / NCR
+      [28.1920, 76.6190], // Rewari (Haryana)
+      [26.8720, 75.2420], // Phulera / Jaipur (Rajasthan)
+      [25.7333, 73.3667], // Marwar Jn
+      [24.1720, 72.4340], // Palanpur (Gujarat)
+      [23.0225, 72.5714], // Ahmedabad
+      [22.3072, 73.1812], // Vadodara
+      [21.1702, 72.8311], // Surat
+      [20.3712, 72.9044], // Valsad
+      [19.4564, 72.7925], // Vaitarna
+      [18.9500, 72.9500]  // JNPT Port Mumbai
+    ]
   },
   {
     id: "ne-gas-grid",
-    name: "North East Gas Grid Pipeline (1656 KM)",
+    name: "North East Gas Grid Pipeline Network (1,656 KM)",
     color: "#166534",
-    points: [[555, 360], [628, 272], [660, 255], [720, 300], [690, 340]],
+    agency: "IGGL / MoPNG",
     costCr: 9265,
     progress: "87.60%",
-    agency: "IGGL / MoPNG"
+    speed: "Hydrocarbon Arterial Grid",
+    waypoints: [
+      [25.6093, 85.1235], // Barauni (Bihar)
+      [26.7509, 88.4312], // Siliguri (WB)
+      [26.1445, 91.7362], // Guwahati (Assam)
+      [27.0844, 93.6053], // Itanagar (Arunachal)
+      [25.5788, 91.8933], // Shillong (Meghalaya)
+      [25.6751, 94.1086], // Dimapur / Kohima (Nagaland)
+      [24.8170, 93.9368], // Imphal (Manipur)
+      [23.7271, 92.7176], // Aizawl (Mizoram)
+      [23.8315, 91.2868]  // Agartala (Tripura)
+    ]
+  },
+  {
+    id: "frontier-hwy",
+    name: "NH-913 Arunachal Frontier Strategic Highway",
+    color: "#7c3aed",
+    agency: "MoRTH / NHIDCL",
+    costCr: 27000,
+    progress: "42.50%",
+    speed: "Strategic Frontier Highway",
+    waypoints: [
+      [27.5861, 91.8653], // Tawang
+      [27.2645, 92.4172], // Bomdila
+      [27.5950, 93.8350], // Ziro
+      [28.0667, 95.3333], // Pasighat
+      [28.2500, 95.8300], // Roing
+      [27.9167, 96.1667], // Tezu
+      [27.1990, 96.9940]  // Vijaynagar / Kibithu
+    ]
   }
 ];
 
 export default function NationalInfrastructureMap({ onSelectProject }) {
   const { t } = useLanguage();
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const layersRef = useRef({ circles: [], polylines: [] });
+
   const [selectedMetric, setSelectedMetric] = useState('count'); // 'count', 'outlay', 'expenditure'
   const [activeStateName, setActiveStateName] = useState('Maharashtra');
-  const [hoveredState, setHoveredState] = useState(null);
   const [selectedRegion, setSelectedRegion] = useState('ALL');
   const [showCorridors, setShowCorridors] = useState(true);
-  const [zoomLevel, setZoomLevel] = useState(1);
-  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [mapTileStyle, setMapTileStyle] = useState('carto'); // 'carto', 'osm', 'satellite'
 
-  // Map state data dictionary merging Flash Report statistics
+  // Map state dictionary
   const stateDataMap = useMemo(() => {
     const dict = {};
     STATES_SUMMARY.forEach(s => {
@@ -381,53 +179,208 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
     return dict;
   }, []);
 
-  // Selected State object with full metrics
+  // Selected State object
   const activeState = useMemo(() => {
     const cleanKey = activeStateName.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim();
     const stat = stateDataMap[cleanKey] || STATES_SUMMARY.find(s => s.state.toLowerCase().includes(cleanKey)) || STATES_SUMMARY[0];
-    const geo = INDIA_STATES_SVG.find(g => g.name.toLowerCase().includes(cleanKey)) || INDIA_STATES_SVG[0];
+    const geo = INDIA_STATES_GPS.find(g => g.name.toLowerCase().includes(cleanKey)) || INDIA_STATES_GPS[0];
     return {
       ...stat,
       ...geo
     };
   }, [stateDataMap, activeStateName]);
 
-  // Projects in the active selected state
+  // Projects in active selected state
   const stateProjects = useMemo(() => {
     if (!activeState) return [];
-    const cleanName = activeState.state.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim();
+    const cleanName = (activeState.state || activeState.name || '').toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim();
     return DETAILED_PROJECTS.filter(p => p.state.toLowerCase().includes(cleanName));
   }, [activeState]);
 
-  // Color generator for choropleth state fills
-  const getStateFillColor = (stateName, isSelected, isHovered) => {
-    if (isSelected) return "#ff9933"; // Official National Saffron for selected state
-    if (isHovered) return "#93c5fd";
+  // Initialize Leaflet Map
+  useEffect(() => {
+    if (!mapContainerRef.current) return;
 
-    const cleanKey = stateName.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim();
-    const data = stateDataMap[cleanKey];
-    if (!data) return "#e2e8f0";
+    if (!mapInstanceRef.current) {
+      // Create map centered on India
+      const map = L.map(mapContainerRef.current, {
+        center: [22.8, 80.5],
+        zoom: 5,
+        minZoom: 4,
+        maxZoom: 10,
+        zoomControl: false
+      });
 
-    if (selectedMetric === 'count') {
-      const count = data.count || 0;
-      if (count > 150) return "#003366"; // Deep Gov Navy
-      if (count > 100) return "#0b4884";
-      if (count > 50) return "#1e60a5";
-      if (count > 20) return "#3b82f6";
-      return "#93c5fd"; // Light Blue
-    } else if (selectedMetric === 'outlay') {
-      const outlay = data.costLakhCr || 0;
-      if (outlay > 4.0) return "#7c2d12"; // Deep Amber
-      if (outlay > 2.5) return "#c2410c";
-      if (outlay > 1.0) return "#ea580c";
-      return "#fed7aa";
-    } else {
-      // Expenditure
-      const exp = data.expenditureLakhCr || 0;
-      if (exp > 3.0) return "#14532d"; // Deep Gov Green
-      if (exp > 1.5) return "#166534";
-      if (exp > 0.5) return "#22c55e";
-      return "#bbf7d0";
+      // Add Custom Zoom Control in top right
+      L.control.zoom({ position: 'topright' }).addTo(map);
+
+      mapInstanceRef.current = map;
+    }
+
+    const map = mapInstanceRef.current;
+
+    // Tile Layer based on mapTileStyle
+    let tileUrl = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
+    let attribution = '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap';
+
+    if (mapTileStyle === 'osm') {
+      tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+      attribution = '&copy; OpenStreetMap contributors';
+    } else if (mapTileStyle === 'satellite') {
+      tileUrl = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+      attribution = '&copy; Esri World Imagery';
+    }
+
+    // Remove existing tile layers
+    map.eachLayer((layer) => {
+      if (layer instanceof L.TileLayer) {
+        map.removeLayer(layer);
+      }
+    });
+
+    L.tileLayer(tileUrl, {
+      attribution,
+      maxZoom: 18,
+      subdomains: 'abcd'
+    }).addTo(map);
+
+    return () => {
+      // cleanup on unmount
+    };
+  }, [mapTileStyle]);
+
+  // Update State Circles & Corridors on Map
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Clear old circles and polylines
+    layersRef.current.circles.forEach(c => map.removeLayer(c));
+    layersRef.current.polylines.forEach(p => map.removeLayer(p));
+    layersRef.current.circles = [];
+    layersRef.current.polylines = [];
+
+    // 1. Draw Strategic Corridors (if enabled)
+    if (showCorridors) {
+      STRATEGIC_CORRIDORS_GPS.forEach(corridor => {
+        const polyline = L.polyline(corridor.waypoints, {
+          color: corridor.color,
+          weight: 4,
+          opacity: 0.85,
+          dashArray: '8, 6',
+          lineCap: 'round'
+        }).addTo(map);
+
+        polyline.bindPopup(`
+          <div style="font-family: sans-serif; padding: 4px;">
+            <strong style="color: #002244; font-size: 13px;">${corridor.name}</strong>
+            <div style="font-size: 11px; color: #475569; margin-top: 4px;">
+              Agency: <strong>${corridor.agency}</strong> | Cost: <strong>₹${corridor.costCr.toLocaleString()} Cr</strong>
+            </div>
+            <div style="font-size: 11px; color: #166534; font-weight: bold; margin-top: 2px;">
+              Progress: ${corridor.progress} (${corridor.speed})
+            </div>
+          </div>
+        `);
+
+        layersRef.current.polylines.push(polyline);
+      });
+    }
+
+    // 2. Draw Interactive State Circles
+    INDIA_STATES_GPS.forEach(state => {
+      const cleanKey = state.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim();
+      const data = stateDataMap[cleanKey];
+      if (!data) return;
+
+      const isSelected = activeStateName.toLowerCase().includes(cleanKey);
+      const isRegionMatch = selectedRegion === 'ALL' || state.region === selectedRegion;
+
+      // Metric calculations for radius and color
+      let radius = 22000;
+      let fillColor = '#3b82f6';
+      let strokeColor = '#003366';
+
+      if (selectedMetric === 'count') {
+        const count = data.count || 0;
+        radius = Math.max(16000, count * 750);
+        if (count >= 120) fillColor = '#003366';
+        else if (count >= 50) fillColor = '#0284c7';
+        else fillColor = '#38bdf8';
+      } else if (selectedMetric === 'outlay') {
+        const outlay = data.costLakhCr || 0;
+        radius = Math.max(16000, outlay * 28000);
+        if (outlay >= 3.0) fillColor = '#9a3412';
+        else if (outlay >= 1.0) fillColor = '#ea580c';
+        else fillColor = '#fb923c';
+        strokeColor = '#7c2d12';
+      } else {
+        const exp = data.expenditureLakhCr || 0;
+        radius = Math.max(16000, exp * 32000);
+        if (exp >= 2.0) fillColor = '#14532d';
+        else if (exp >= 0.8) fillColor = '#166534';
+        else fillColor = '#4ade80';
+        strokeColor = '#052e16';
+      }
+
+      if (isSelected) {
+        fillColor = '#ff9933'; // National Saffron for selected state
+        strokeColor = '#c2410c';
+        radius = radius * 1.25;
+      }
+
+      const circle = L.circle([state.lat, state.lng], {
+        radius: isRegionMatch ? radius : radius * 0.7,
+        fillColor: fillColor,
+        fillOpacity: isRegionMatch ? (isSelected ? 0.95 : 0.75) : 0.15,
+        color: isSelected ? '#ff9933' : strokeColor,
+        weight: isSelected ? 3.5 : 1.5
+      }).addTo(map);
+
+      // State Label Tooltip
+      circle.bindTooltip(`
+        <div style="font-family: sans-serif; font-size: 11px; padding: 2px;">
+          <strong style="color: #002244;">${state.name.replace(' (NE)', '').replace(' (NCR)', '')}</strong> (${state.capital})<br/>
+          Projects: <strong>${data.count}</strong> | Outlay: <strong>₹${data.costLakhCr}L Cr</strong><br/>
+          Expenditure: <strong style="color: #166534;">₹${data.expenditureLakhCr}L Cr</strong>
+        </div>
+      `, {
+        permanent: isSelected,
+        direction: 'top',
+        className: isSelected ? 'leaflet-active-state-tooltip' : ''
+      });
+
+      // Click Handler
+      circle.on('click', () => {
+        setActiveStateName(state.name);
+        map.panTo([state.lat, state.lng], { animate: true, duration: 0.5 });
+      });
+
+      layersRef.current.circles.push(circle);
+    });
+
+  }, [selectedMetric, activeStateName, selectedRegion, showCorridors, stateDataMap]);
+
+  // Quick region zoom helper
+  const handleZoomToRegion = (regionCode) => {
+    setSelectedRegion(regionCode);
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (regionCode === 'ALL') {
+      map.setView([22.8, 80.5], 5, { animate: true });
+    } else if (regionCode === 'North East') {
+      map.setView([26.0, 93.0], 6.5, { animate: true });
+    } else if (regionCode === 'North') {
+      map.setView([30.0, 76.5], 6, { animate: true });
+    } else if (regionCode === 'West') {
+      map.setView([21.0, 73.0], 6, { animate: true });
+    } else if (regionCode === 'South') {
+      map.setView([13.5, 77.5], 6, { animate: true });
+    } else if (regionCode === 'East') {
+      map.setView([23.5, 86.5], 6, { animate: true });
+    } else if (regionCode === 'Central') {
+      map.setView([22.5, 80.0], 6, { animate: true });
     }
   };
 
@@ -476,7 +429,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
           </div>
         </div>
 
-        {/* Region Filter Bar */}
+        {/* Region & Basemap Controls */}
         <div style={{
           display: 'flex',
           gap: '6px',
@@ -486,19 +439,19 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
           borderTop: '1px solid var(--border-light)',
           alignItems: 'center'
         }}>
-          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Region:</span>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Quick Region:</span>
           {[
             { id: 'ALL', label: t('regionAll', 'All India (35 States)') },
-            { id: 'North', label: t('regionNorth', 'North Region') },
-            { id: 'West', label: t('regionWest', 'West Region') },
-            { id: 'South', label: t('regionSouth', 'South Region') },
-            { id: 'East', label: t('regionEast', 'East Region') },
-            { id: 'Central', label: t('regionCentral', 'Central Region') },
-            { id: 'North East', label: t('regionNE', 'North East Region') }
+            { id: 'North', label: t('regionNorth', 'North') },
+            { id: 'West', label: t('regionWest', 'West') },
+            { id: 'South', label: t('regionSouth', 'South') },
+            { id: 'East', label: t('regionEast', 'East') },
+            { id: 'Central', label: t('regionCentral', 'Central') },
+            { id: 'North East', label: t('regionNE', 'North East (NER)') }
           ].map(r => (
             <button
               key={r.id}
-              onClick={() => setSelectedRegion(r.id)}
+              onClick={() => handleZoomToRegion(r.id)}
               style={{
                 padding: '3px 10px',
                 borderRadius: '3px',
@@ -515,272 +468,111 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
             </button>
           ))}
 
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <input
-              type="checkbox"
-              id="corridorsToggle"
-              checked={showCorridors}
-              onChange={(e) => setShowCorridors(e.target.checked)}
-              style={{ cursor: 'pointer' }}
-            />
-            <label htmlFor="corridorsToggle" style={{ fontSize: '0.75rem', color: '#334155', cursor: 'pointer', fontWeight: 600 }}>
-              {t('corridorsToggle', 'Show Multi-State Mega Corridors')}
-            </label>
+          {/* Map Tile Switcher */}
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Basemap:</span>
+            <select
+              value={mapTileStyle}
+              onChange={(e) => setMapTileStyle(e.target.value)}
+              style={{
+                padding: '2px 6px',
+                fontSize: '0.75rem',
+                borderRadius: '3px',
+                border: '1px solid var(--border-gov)',
+                background: '#ffffff',
+                color: 'var(--gov-navy)',
+                fontWeight: 600,
+                outline: 'none'
+              }}
+            >
+              <option value="carto">🏛️ Carto Clean (Gov Theme)</option>
+              <option value="osm">🗺️ OpenStreetMap (Detailed)</option>
+              <option value="satellite">🛰️ Satellite Terrain (Esri)</option>
+            </select>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <input
+                type="checkbox"
+                id="corridorsToggle"
+                checked={showCorridors}
+                onChange={(e) => setShowCorridors(e.target.checked)}
+                style={{ cursor: 'pointer' }}
+              />
+              <label htmlFor="corridorsToggle" style={{ fontSize: '0.75rem', color: '#334155', cursor: 'pointer', fontWeight: 600 }}>
+                {t('corridorsToggle', 'Show Corridors')}
+              </label>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Dual Grid: India Vector Map with Oceans + State Intelligence Panel */}
+      {/* Main Dual Grid: GIS Leaflet Map with Oceans & Boundaries + State Intelligence Panel */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(520px, 1.45fr) minmax(360px, 1fr)',
+        gridTemplateColumns: 'minmax(540px, 1.45fr) minmax(360px, 1fr)',
         gap: '1rem',
         alignItems: 'start'
       }}>
         
-        {/* Left Column: High-Detail Vector Map Canvas with Oceans */}
-        <div className="gov-card" style={{ padding: '1rem', background: '#ffffff', position: 'relative' }}>
+        {/* Left Column: Interactive GIS Map Canvas */}
+        <div className="gov-card" style={{ padding: '0.8rem', background: '#ffffff', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Compass size={16} color="var(--gov-navy)" />
               <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--gov-navy-dark)' }}>
-                Geospatial Cartogram of India & Surrounding Oceans
+                GIS Cartography: All 35 Indian States & Surrounding Oceans
               </h3>
             </div>
 
-            {/* Map Controls */}
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-              <button
-                onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.2))}
-                className="gov-btn gov-btn-secondary"
-                style={{ padding: '2px 6px', fontSize: '0.7rem' }}
-                title="Zoom in"
-              >
-                <ZoomIn size={13} />
-              </button>
-              <button
-                onClick={() => setZoomLevel(prev => Math.max(0.8, prev - 0.2))}
-                className="gov-btn gov-btn-secondary"
-                style={{ padding: '2px 6px', fontSize: '0.7rem' }}
-                title="Zoom out"
-              >
-                <ZoomOut size={13} />
-              </button>
-              <button
-                onClick={() => { setZoomLevel(1); setPanOffset({ x: 0, y: 0 }); }}
-                className="gov-btn gov-btn-secondary"
-                style={{ padding: '2px 6px', fontSize: '0.7rem' }}
-                title="Reset zoom"
-              >
-                <RotateCcw size={13} />
-              </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.75rem', color: '#64748b' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <Waves size={12} color="#0284c7" /> Arabian Sea • Bay of Bengal • Indian Ocean
+              </span>
             </div>
           </div>
 
-          {/* SVG Map Container with Nautical Oceanic Background */}
-          <div style={{
-            width: '100%',
-            height: '660px',
-            background: 'linear-gradient(180deg, #f0f7ff 0%, #e0f2fe 70%, #bae6fd 100%)',
-            border: '1.5px solid var(--border-gov)',
-            borderRadius: '4px',
-            position: 'relative',
-            overflow: 'hidden',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}>
-            <svg
-              viewBox="60 15 760 855"
-              style={{
-                width: '100%',
-                height: '100%',
-                transform: `scale(${zoomLevel}) translate(${panOffset.x}px, ${panOffset.y}px)`,
-                transition: 'transform 0.2s ease',
-                cursor: 'pointer'
-              }}
-            >
-              {/* Oceanic Bathymetry Curves & Waves */}
-              {/* Arabian Sea Waves (West) */}
-              <path d="M 80 470 Q 140 450, 180 520 T 120 620" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.6" />
-              <path d="M 90 530 Q 150 510, 170 580 T 130 670" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5" />
-              
-              {/* Bay of Bengal Waves (East) */}
-              <path d="M 570 480 Q 640 460, 680 540 T 630 650" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.6" />
-              <path d="M 580 550 Q 660 520, 690 600 T 650 710" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5" />
-
-              {/* Indian Ocean Waves (South) */}
-              <path d="M 230 790 Q 360 760, 500 790 T 640 820" fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="8 5" opacity="0.7" />
-              <path d="M 250 820 Q 380 790, 520 820 T 660 850" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="8 5" opacity="0.5" />
-
-              {/* OCEAN LABELS (Bold, Crisp & Nautical) */}
-              {/* 1. Arabian Sea */}
-              <g opacity="0.85">
-                <text x="135" y="550" fontSize="13" fontWeight="900" fill="#0369a1" letterSpacing="0.15em" textAnchor="middle">
-                  {t('arabianSea', 'ARABIAN SEA')}
-                </text>
-                <text x="135" y="566" fontSize="10" fontWeight="700" fill="#0284c7" textAnchor="middle">
-                  (अरब सागर)
-                </text>
-              </g>
-
-              {/* 2. Bay of Bengal */}
-              <g opacity="0.85">
-                <text x="645" y="545" fontSize="13" fontWeight="900" fill="#0369a1" letterSpacing="0.15em" textAnchor="middle">
-                  {t('bayOfBengal', 'BAY OF BENGAL')}
-                </text>
-                <text x="645" y="561" fontSize="10" fontWeight="700" fill="#0284c7" textAnchor="middle">
-                  (बंगाल की खाड़ी)
-                </text>
-              </g>
-
-              {/* 3. Indian Ocean */}
-              <g opacity="0.9">
-                <text x="390" y="825" fontSize="15" fontWeight="900" fill="#075985" letterSpacing="0.2em" textAnchor="middle">
-                  {t('indianOcean', 'INDIAN OCEAN')}
-                </text>
-                <text x="390" y="842" fontSize="11" fontWeight="700" fill="#0369a1" textAnchor="middle">
-                  (हिंद महासागर)
-                </text>
-              </g>
-
-              {/* Grid Lat/Long Coordinates */}
-              <line x1="60" y1="200" x2="820" y2="200" stroke="#bae6fd" strokeDasharray="3 3" />
-              <text x="65" y="196" fill="#0284c7" fontSize="8" fontWeight="600">28° N</text>
-
-              <line x1="60" y1="440" x2="820" y2="440" stroke="#bae6fd" strokeDasharray="3 3" />
-              <text x="65" y="436" fill="#0284c7" fontSize="8" fontWeight="600">20° N</text>
-
-              <line x1="60" y1="670" x2="820" y2="670" stroke="#bae6fd" strokeDasharray="3 3" />
-              <text x="65" y="666" fill="#0284c7" fontSize="8" fontWeight="600">12° N</text>
-
-              {/* 1. Render All Indian States SVG Polygons with Crisp Borders */}
-              {INDIA_STATES_SVG.map((state) => {
-                const isSelected = activeState?.id === state.id || activeStateName.toLowerCase().includes(state.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim());
-                const isHovered = hoveredState?.id === state.id;
-                const fillColor = getStateFillColor(state.name, isSelected, isHovered);
-                const isMatchingRegion = selectedRegion === 'ALL' || state.region === selectedRegion;
-
-                return (
-                  <g
-                    key={state.id}
-                    onClick={() => setActiveStateName(state.name)}
-                    onMouseEnter={() => setHoveredState(state)}
-                    onMouseLeave={() => setHoveredState(null)}
-                    style={{ opacity: isMatchingRegion ? 1 : 0.25, transition: 'all 0.15s ease' }}
-                  >
-                    {/* Crisp State Polygon */}
-                    <path
-                      d={state.path}
-                      fill={fillColor}
-                      stroke={isSelected ? "#ff9933" : "#ffffff"}
-                      strokeWidth={isSelected ? "3.5" : "1.8"}
-                      strokeLinejoin="round"
-                      strokeLinecap="round"
-                      filter={isSelected ? "drop-shadow(0 2px 6px rgba(255,153,51,0.5))" : undefined}
-                    />
-
-                    {/* Capital Pin Marker */}
-                    <circle
-                      cx={state.center[0]}
-                      cy={state.center[1]}
-                      r={isSelected ? 4.5 : 3}
-                      fill={isSelected ? "#ffffff" : "rgba(0,34,68,0.85)"}
-                      stroke={isSelected ? "#ff9933" : "#ffffff"}
-                      strokeWidth={isSelected ? 2 : 1}
-                    />
-
-                    {/* State Name Label */}
-                    <text
-                      x={state.center[0]}
-                      y={state.center[1] + 12}
-                      fontSize="9"
-                      fontWeight={isSelected ? "900" : "700"}
-                      fill={isSelected ? "#002244" : "#0f172a"}
-                      textAnchor="middle"
-                      style={{ pointerEvents: 'none', userSelect: 'none' }}
-                    >
-                      {state.name.replace(' (NE)', '').replace(' (NCR)', '')}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* 2. Render Strategic Multi-State Corridors */}
-              {showCorridors && STRATEGIC_CORRIDORS_DATA.map(c => {
-                const pathStr = c.points.reduce((acc, pt, idx) => `${acc} ${idx === 0 ? 'M' : 'L'} ${pt[0]} ${pt[1]}`, "");
-                return (
-                  <g key={c.id}>
-                    <path
-                      d={pathStr}
-                      fill="none"
-                      stroke={c.color}
-                      strokeWidth="3.5"
-                      strokeDasharray="6 3"
-                      strokeLinecap="round"
-                    />
-                  </g>
-                );
-              })}
-            </svg>
-
-            {/* Hover Tooltip Card Overlay */}
-            {hoveredState && (
-              <div style={{
-                position: 'absolute',
-                top: '12px',
-                left: '12px',
-                background: '#ffffff',
-                border: '2px solid var(--gov-navy)',
-                borderRadius: '4px',
-                padding: '8px 12px',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
-                pointerEvents: 'none',
-                zIndex: 10,
-                fontSize: '0.8rem'
-              }}>
-                <div style={{ fontWeight: 800, color: 'var(--gov-navy-dark)', fontSize: '0.95rem' }}>
-                  {hoveredState.name} • {hoveredState.capital}
-                </div>
-                {stateDataMap[hoveredState.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim()] && (
-                  <div style={{ marginTop: '2px', color: '#334155' }}>
-                    {t('projectsMonitored', 'Projects')}: <strong>{stateDataMap[hoveredState.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim()].count}</strong> | 
-                    {t('approvedOutlay', 'Outlay')}: <strong>₹{stateDataMap[hoveredState.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim()].costLakhCr}L Cr</strong>
-                  </div>
-                )}
-                <div style={{ fontSize: '0.7rem', color: '#166534', fontWeight: 600 }}>Click to inspect state dossier</div>
-              </div>
-            )}
-
-            {/* Map Legend */}
-            <div style={{
-              position: 'absolute',
-              bottom: '10px',
-              left: '10px',
-              background: '#ffffff',
-              border: '1px solid var(--border-gov)',
+          {/* Leaflet Map Canvas */}
+          <div 
+            ref={mapContainerRef} 
+            style={{
+              width: '100%',
+              height: '660px',
               borderRadius: '4px',
-              padding: '8px 12px',
-              fontSize: '0.7rem',
-              color: '#334155',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px',
-              boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
-            }}>
-              <strong style={{ color: 'var(--gov-navy-dark)' }}>Choropleth Density Scale:</strong>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#003366', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> High Density (&gt;100 Proj / &gt;₹4L Cr)
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#3b82f6', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> Medium Density (25-100 Proj)
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#93c5fd', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> Standard Density (&lt;25 Proj)
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '14px', height: '10px', background: '#ff9933', display: 'inline-block', border: '1px solid #c2410c' }}></span> Active Selected State
-              </div>
+              border: '1.5px solid var(--border-gov)',
+              zIndex: 1
+            }} 
+          />
+
+          {/* Floating Map Legend */}
+          <div style={{
+            position: 'absolute',
+            bottom: '24px',
+            left: '20px',
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(4px)',
+            border: '1px solid var(--border-gov)',
+            borderRadius: '4px',
+            padding: '8px 12px',
+            fontSize: '0.7rem',
+            color: '#334155',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '4px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            zIndex: 1000
+          }}>
+            <strong style={{ color: 'var(--gov-navy-dark)' }}>Project Density Legend:</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#003366', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> Very High (&gt;120 Proj / &gt;₹3L Cr)
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#0284c7', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> High Density (50-120 Proj)
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#38bdf8', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> Standard Density (&lt;50 Proj)
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '12px', height: '12px', borderRadius: '50%', background: '#ff9933', display: 'inline-block', border: '1px solid #c2410c' }}></span> Active Selected State
             </div>
           </div>
         </div>
@@ -922,7 +714,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
             </div>
 
             <div style={{ padding: '0.8rem 1rem', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem' }}>
-              {STRATEGIC_CORRIDORS_DATA.map(c => (
+              {STRATEGIC_CORRIDORS_GPS.map(c => (
                 <div 
                   key={c.id}
                   style={{
@@ -938,7 +730,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                     <span style={{ color: '#166534', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{c.progress}</span>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '2px' }}>
-                    Outlay: <strong>₹{c.costCr.toLocaleString()} Cr</strong> • {c.agency}
+                    Outlay: <strong>₹{c.costCr.toLocaleString()} Cr</strong> • {c.agency} • {c.speed}
                   </div>
                 </div>
               ))}
