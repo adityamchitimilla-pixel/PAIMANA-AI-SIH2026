@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import Navbar from './components/Navbar';
 import ExecutiveOverview from './components/ExecutiveOverview';
 import AIPredictionDashboard from './components/AIPredictionDashboard';
@@ -11,13 +12,14 @@ import DrishtiAIAssistant from './components/DrishtiAIAssistant';
 import ProjectDetailModal from './components/ProjectDetailModal';
 import ReportGeneratorModal from './components/ReportGeneratorModal';
 import SearchModal from './components/SearchModal';
-import { Bot, ShieldCheck, FileText, ChevronUp, Globe } from 'lucide-react';
+import { Bot } from 'lucide-react';
 
-export default function App() {
+function MainAppContent() {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedProject, setSelectedProject] = useState(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { t } = useLanguage();
 
   // Keyboard shortcut Ctrl+K / Cmd+K for Quick Search
   useEffect(() => {
@@ -119,7 +121,7 @@ export default function App() {
           }}
         >
           <Bot size={16} color="#ff9933" />
-          <span>Drishti AI Assistant</span>
+          <span>{t('tabAssistant', 'Drishti AI Assistant')}</span>
         </button>
       )}
 
@@ -207,5 +209,13 @@ export default function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <LanguageProvider>
+      <MainAppContent />
+    </LanguageProvider>
   );
 }

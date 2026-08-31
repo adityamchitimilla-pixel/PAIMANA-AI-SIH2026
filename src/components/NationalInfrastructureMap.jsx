@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   STATES_SUMMARY, 
   DETAILED_PROJECTS, 
@@ -23,10 +24,11 @@ import {
   RotateCcw,
   Sparkles,
   CheckCircle2,
-  Table
+  Table,
+  Waves
 } from 'lucide-react';
 
-// Official Detailed SVG Geometries for all Indian States & Union Territories (Projection ViewBox: 0 0 800 880)
+// Official Detailed SVG Geometries for all Indian States & Union Territories (Projection ViewBox: 0 0 840 880)
 export const INDIA_STATES_SVG = [
   // 1. Ladakh
   {
@@ -86,8 +88,8 @@ export const INDIA_STATES_SVG = [
   {
     id: "delhi",
     name: "Delhi (NCR)",
-    path: "M 322 225 L 332 225 L 332 235 L 322 235 Z",
-    center: [327, 230],
+    path: "M 322 225 L 334 225 L 334 237 L 322 237 Z",
+    center: [328, 231],
     capital: "New Delhi",
     region: "North"
   },
@@ -185,8 +187,8 @@ export const INDIA_STATES_SVG = [
   {
     id: "goa",
     name: "Goa",
-    path: "M 235 550 L 245 550 L 245 565 L 235 565 Z",
-    center: [240, 558],
+    path: "M 235 550 L 248 550 L 248 565 L 235 565 Z",
+    center: [241, 558],
     capital: "Panaji",
     region: "West"
   },
@@ -307,18 +309,27 @@ export const INDIA_STATES_SVG = [
     capital: "Agartala",
     region: "North East"
   },
-  // 32. Andaman & Nicobar
+  // 32. Lakshadweep Archipelago (Arabian Sea)
+  {
+    id: "lakshadweep",
+    name: "Lakshadweep",
+    path: "M 220 680 L 228 680 L 228 690 L 220 690 Z M 215 705 L 223 705 L 223 715 L 215 715 Z M 210 725 L 218 725 L 218 735 L 210 735 Z",
+    center: [220, 705],
+    capital: "Kavaratti",
+    region: "UT"
+  },
+  // 33. Andaman & Nicobar (Bay of Bengal)
   {
     id: "andaman",
     name: "Andaman & Nicobar",
-    path: "M 710 680 L 725 680 L 725 760 L 710 760 Z",
-    center: [718, 720],
+    path: "M 720 660 L 732 660 L 732 705 L 720 705 Z M 724 725 L 734 725 L 734 765 L 724 765 Z",
+    center: [728, 710],
     capital: "Port Blair",
     region: "UT"
   }
 ];
 
-// Strategic High-Impact Multi-State Economic Corridors
+// Strategic Multi-State Corridors Data
 export const STRATEGIC_CORRIDORS_DATA = [
   {
     id: "bullet-train",
@@ -327,18 +338,16 @@ export const STRATEGIC_CORRIDORS_DATA = [
     points: [[300, 475], [240, 430], [200, 390], [175, 385]],
     costCr: 108000,
     progress: "59.86%",
-    agency: "NHSRCL",
-    speed: "320 km/h Bullet Train"
+    agency: "NHSRCL"
   },
   {
     id: "wdfc",
     name: "Western Dedicated Freight Corridor (1504 KM)",
     color: "#ea580c",
-    points: [[327, 230], [270, 250], [225, 280], [175, 385], [300, 475]],
+    points: [[328, 231], [270, 250], [225, 280], [175, 385], [300, 475]],
     costCr: 124005,
     progress: "96.00%",
-    agency: "DFCCIL",
-    speed: "Electric Heavy Haul Rail"
+    agency: "DFCCIL"
   },
   {
     id: "ne-gas-grid",
@@ -347,12 +356,12 @@ export const STRATEGIC_CORRIDORS_DATA = [
     points: [[555, 360], [628, 272], [660, 255], [720, 300], [690, 340]],
     costCr: 9265,
     progress: "87.60%",
-    agency: "IGGL / MoPNG",
-    speed: "Hydrocarbon Arterial"
+    agency: "IGGL / MoPNG"
   }
 ];
 
 export default function NationalInfrastructureMap({ onSelectProject }) {
+  const { t } = useLanguage();
   const [selectedMetric, setSelectedMetric] = useState('count'); // 'count', 'outlay', 'expenditure'
   const [activeStateName, setActiveStateName] = useState('Maharashtra');
   const [hoveredState, setHoveredState] = useState(null);
@@ -389,10 +398,6 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
     const cleanName = activeState.state.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim();
     return DETAILED_PROJECTS.filter(p => p.state.toLowerCase().includes(cleanName));
   }, [activeState]);
-
-  // Max bounds for color scaling
-  const maxProjectCount = 213; // Maharashtra
-  const maxOutlayCr = 5.43; // ₹5.43 Lakh Cr
 
   // Color generator for choropleth state fills
   const getStateFillColor = (stateName, isSelected, isHovered) => {
@@ -434,13 +439,13 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.8rem' }}>
           <div>
             <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '2px' }}>
-              PAIMANA Geospatial Portal ➔ <strong>National Infrastructure GIS Map (April 2026 Data)</strong>
+              PAIMANA Geospatial Portal ➔ <strong>{t('tabGisMap', 'National GIS Map')}</strong>
             </div>
             <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--gov-navy-dark)' }}>
-              Geospatial Map of India: Central Sector Infrastructure Outlay
+              {t('mapHeading', 'Geospatial Map of India: Central Sector Infrastructure Outlay')}
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-              Detailed spatial mapping of <strong>1,981 Central Sector Projects</strong> across <strong>35 States & UTs</strong> costing ₹150 Crore and above.
+              {t('mapSubheading', 'Detailed spatial mapping of 1,981 Central Sector Projects across 35 States & UTs costing ₹150 Crore and above.')}
             </p>
           </div>
 
@@ -452,21 +457,21 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               className={`gov-btn ${selectedMetric === 'count' ? 'gov-btn-primary' : 'gov-btn-secondary'}`}
               style={{ fontSize: '0.75rem', padding: '4px 10px' }}
             >
-              Project Volume
+              {t('metricVolume', 'Project Volume')}
             </button>
             <button
               onClick={() => setSelectedMetric('outlay')}
               className={`gov-btn ${selectedMetric === 'outlay' ? 'gov-btn-saffron' : 'gov-btn-secondary'}`}
               style={{ fontSize: '0.75rem', padding: '4px 10px' }}
             >
-              Capital Outlay (₹ L Cr)
+              {t('metricOutlay', 'Capital Outlay (₹ L Cr)')}
             </button>
             <button
               onClick={() => setSelectedMetric('expenditure')}
               className={`gov-btn ${selectedMetric === 'expenditure' ? 'gov-btn-green' : 'gov-btn-secondary'}`}
               style={{ fontSize: '0.75rem', padding: '4px 10px' }}
             >
-              Expenditure (₹ L Cr)
+              {t('metricExp', 'Expenditure (₹ L Cr)')}
             </button>
           </div>
         </div>
@@ -482,23 +487,31 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
           alignItems: 'center'
         }}>
           <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Region:</span>
-          {['ALL', 'North', 'West', 'South', 'East', 'Central', 'North East'].map(region => (
+          {[
+            { id: 'ALL', label: t('regionAll', 'All India (35 States)') },
+            { id: 'North', label: t('regionNorth', 'North Region') },
+            { id: 'West', label: t('regionWest', 'West Region') },
+            { id: 'South', label: t('regionSouth', 'South Region') },
+            { id: 'East', label: t('regionEast', 'East Region') },
+            { id: 'Central', label: t('regionCentral', 'Central Region') },
+            { id: 'North East', label: t('regionNE', 'North East Region') }
+          ].map(r => (
             <button
-              key={region}
-              onClick={() => setSelectedRegion(region)}
+              key={r.id}
+              onClick={() => setSelectedRegion(r.id)}
               style={{
                 padding: '3px 10px',
                 borderRadius: '3px',
                 fontSize: '0.75rem',
-                fontWeight: selectedRegion === region ? 700 : 500,
-                background: selectedRegion === region ? 'var(--gov-navy)' : '#ffffff',
-                color: selectedRegion === region ? '#ffffff' : '#334155',
+                fontWeight: selectedRegion === r.id ? 700 : 500,
+                background: selectedRegion === r.id ? 'var(--gov-navy)' : '#ffffff',
+                color: selectedRegion === r.id ? '#ffffff' : '#334155',
                 border: '1px solid var(--border-gov)',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap'
               }}
             >
-              {region === 'ALL' ? 'All India (35 States)' : `${region} Region`}
+              {r.label}
             </button>
           ))}
 
@@ -511,27 +524,27 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               style={{ cursor: 'pointer' }}
             />
             <label htmlFor="corridorsToggle" style={{ fontSize: '0.75rem', color: '#334155', cursor: 'pointer', fontWeight: 600 }}>
-              Show Multi-State Mega Corridors
+              {t('corridorsToggle', 'Show Multi-State Mega Corridors')}
             </label>
           </div>
         </div>
       </div>
 
-      {/* Main Dual Grid: Authentic India Vector Map + State Intelligence Panel */}
+      {/* Main Dual Grid: India Vector Map with Oceans + State Intelligence Panel */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'minmax(480px, 1.35fr) minmax(360px, 1fr)',
+        gridTemplateColumns: 'minmax(520px, 1.45fr) minmax(360px, 1fr)',
         gap: '1rem',
         alignItems: 'start'
       }}>
         
-        {/* Left Column: High-Detail Vector Map Canvas */}
+        {/* Left Column: High-Detail Vector Map Canvas with Oceans */}
         <div className="gov-card" style={{ padding: '1rem', background: '#ffffff', position: 'relative' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Compass size={16} color="var(--gov-navy)" />
               <h3 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--gov-navy-dark)' }}>
-                Geospatial Cartogram: States & Union Territories of India
+                Geospatial Cartogram of India & Surrounding Oceans
               </h3>
             </div>
 
@@ -564,12 +577,12 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
             </div>
           </div>
 
-          {/* SVG Map Container */}
+          {/* SVG Map Container with Nautical Oceanic Background */}
           <div style={{
             width: '100%',
-            height: '620px',
-            background: '#f8fafc',
-            border: '1px solid var(--border-gov)',
+            height: '660px',
+            background: 'linear-gradient(180deg, #f0f7ff 0%, #e0f2fe 70%, #bae6fd 100%)',
+            border: '1.5px solid var(--border-gov)',
             borderRadius: '4px',
             position: 'relative',
             overflow: 'hidden',
@@ -578,7 +591,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
             justifyContent: 'center'
           }}>
             <svg
-              viewBox="80 20 720 840"
+              viewBox="60 15 760 855"
               style={{
                 width: '100%',
                 height: '100%',
@@ -587,14 +600,61 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                 cursor: 'pointer'
               }}
             >
-              {/* Subtle Map Grid lines */}
-              <line x1="80" y1="200" x2="780" y2="200" stroke="#e2e8f0" strokeDasharray="3 3" />
-              <line x1="80" y1="400" x2="780" y2="400" stroke="#e2e8f0" strokeDasharray="3 3" />
-              <line x1="80" y1="600" x2="780" y2="600" stroke="#e2e8f0" strokeDasharray="3 3" />
-              <line x1="300" y1="20" x2="300" y2="840" stroke="#e2e8f0" strokeDasharray="3 3" />
-              <line x1="500" y1="20" x2="500" y2="840" stroke="#e2e8f0" strokeDasharray="3 3" />
+              {/* Oceanic Bathymetry Curves & Waves */}
+              {/* Arabian Sea Waves (West) */}
+              <path d="M 80 470 Q 140 450, 180 520 T 120 620" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.6" />
+              <path d="M 90 530 Q 150 510, 170 580 T 130 670" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5" />
+              
+              {/* Bay of Bengal Waves (East) */}
+              <path d="M 570 480 Q 640 460, 680 540 T 630 650" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.6" />
+              <path d="M 580 550 Q 660 520, 690 600 T 650 710" fill="none" stroke="#7dd3fc" strokeWidth="1.5" strokeDasharray="6 4" opacity="0.5" />
 
-              {/* 1. Render All Indian States SVG Polygons */}
+              {/* Indian Ocean Waves (South) */}
+              <path d="M 230 790 Q 360 760, 500 790 T 640 820" fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="8 5" opacity="0.7" />
+              <path d="M 250 820 Q 380 790, 520 820 T 660 850" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="8 5" opacity="0.5" />
+
+              {/* OCEAN LABELS (Bold, Crisp & Nautical) */}
+              {/* 1. Arabian Sea */}
+              <g opacity="0.85">
+                <text x="135" y="550" fontSize="13" fontWeight="900" fill="#0369a1" letterSpacing="0.15em" textAnchor="middle">
+                  {t('arabianSea', 'ARABIAN SEA')}
+                </text>
+                <text x="135" y="566" fontSize="10" fontWeight="700" fill="#0284c7" textAnchor="middle">
+                  (अरब सागर)
+                </text>
+              </g>
+
+              {/* 2. Bay of Bengal */}
+              <g opacity="0.85">
+                <text x="645" y="545" fontSize="13" fontWeight="900" fill="#0369a1" letterSpacing="0.15em" textAnchor="middle">
+                  {t('bayOfBengal', 'BAY OF BENGAL')}
+                </text>
+                <text x="645" y="561" fontSize="10" fontWeight="700" fill="#0284c7" textAnchor="middle">
+                  (बंगाल की खाड़ी)
+                </text>
+              </g>
+
+              {/* 3. Indian Ocean */}
+              <g opacity="0.9">
+                <text x="390" y="825" fontSize="15" fontWeight="900" fill="#075985" letterSpacing="0.2em" textAnchor="middle">
+                  {t('indianOcean', 'INDIAN OCEAN')}
+                </text>
+                <text x="390" y="842" fontSize="11" fontWeight="700" fill="#0369a1" textAnchor="middle">
+                  (हिंद महासागर)
+                </text>
+              </g>
+
+              {/* Grid Lat/Long Coordinates */}
+              <line x1="60" y1="200" x2="820" y2="200" stroke="#bae6fd" strokeDasharray="3 3" />
+              <text x="65" y="196" fill="#0284c7" fontSize="8" fontWeight="600">28° N</text>
+
+              <line x1="60" y1="440" x2="820" y2="440" stroke="#bae6fd" strokeDasharray="3 3" />
+              <text x="65" y="436" fill="#0284c7" fontSize="8" fontWeight="600">20° N</text>
+
+              <line x1="60" y1="670" x2="820" y2="670" stroke="#bae6fd" strokeDasharray="3 3" />
+              <text x="65" y="666" fill="#0284c7" fontSize="8" fontWeight="600">12° N</text>
+
+              {/* 1. Render All Indian States SVG Polygons with Crisp Borders */}
               {INDIA_STATES_SVG.map((state) => {
                 const isSelected = activeState?.id === state.id || activeStateName.toLowerCase().includes(state.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim());
                 const isHovered = hoveredState?.id === state.id;
@@ -607,34 +667,36 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                     onClick={() => setActiveStateName(state.name)}
                     onMouseEnter={() => setHoveredState(state)}
                     onMouseLeave={() => setHoveredState(null)}
-                    style={{ opacity: isMatchingRegion ? 1 : 0.25, transition: 'opacity 0.2s ease' }}
+                    style={{ opacity: isMatchingRegion ? 1 : 0.25, transition: 'all 0.15s ease' }}
                   >
-                    {/* State Path */}
+                    {/* Crisp State Polygon */}
                     <path
                       d={state.path}
                       fill={fillColor}
                       stroke={isSelected ? "#ff9933" : "#ffffff"}
-                      strokeWidth={isSelected ? "3" : "1.5"}
+                      strokeWidth={isSelected ? "3.5" : "1.8"}
                       strokeLinejoin="round"
                       strokeLinecap="round"
+                      filter={isSelected ? "drop-shadow(0 2px 6px rgba(255,153,51,0.5))" : undefined}
                     />
 
-                    {/* State Label & Pin */}
+                    {/* Capital Pin Marker */}
                     <circle
                       cx={state.center[0]}
                       cy={state.center[1]}
                       r={isSelected ? 4.5 : 3}
-                      fill={isSelected ? "#ffffff" : "rgba(0,34,68,0.7)"}
+                      fill={isSelected ? "#ffffff" : "rgba(0,34,68,0.85)"}
                       stroke={isSelected ? "#ff9933" : "#ffffff"}
                       strokeWidth={isSelected ? 2 : 1}
                     />
 
+                    {/* State Name Label */}
                     <text
                       x={state.center[0]}
                       y={state.center[1] + 12}
                       fontSize="9"
-                      fontWeight={isSelected ? "800" : "600"}
-                      fill={isSelected ? "#002244" : "#1e293b"}
+                      fontWeight={isSelected ? "900" : "700"}
+                      fill={isSelected ? "#002244" : "#0f172a"}
                       textAnchor="middle"
                       style={{ pointerEvents: 'none', userSelect: 'none' }}
                     >
@@ -654,7 +716,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                       fill="none"
                       stroke={c.color}
                       strokeWidth="3.5"
-                      strokeDasharray="5 3"
+                      strokeDasharray="6 3"
                       strokeLinecap="round"
                     />
                   </g>
@@ -672,21 +734,21 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                 border: '2px solid var(--gov-navy)',
                 borderRadius: '4px',
                 padding: '8px 12px',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.18)',
                 pointerEvents: 'none',
                 zIndex: 10,
                 fontSize: '0.8rem'
               }}>
-                <div style={{ fontWeight: 800, color: 'var(--gov-navy-dark)', fontSize: '0.9rem' }}>
-                  {hoveredState.name} ({hoveredState.capital})
+                <div style={{ fontWeight: 800, color: 'var(--gov-navy-dark)', fontSize: '0.95rem' }}>
+                  {hoveredState.name} • {hoveredState.capital}
                 </div>
                 {stateDataMap[hoveredState.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim()] && (
                   <div style={{ marginTop: '2px', color: '#334155' }}>
-                    Projects: <strong>{stateDataMap[hoveredState.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim()].count}</strong> | 
-                    Outlay: <strong>₹{stateDataMap[hoveredState.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim()].costLakhCr}L Cr</strong>
+                    {t('projectsMonitored', 'Projects')}: <strong>{stateDataMap[hoveredState.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim()].count}</strong> | 
+                    {t('approvedOutlay', 'Outlay')}: <strong>₹{stateDataMap[hoveredState.name.toLowerCase().replace(' (ne)', '').replace(' (ncr)', '').trim()].costLakhCr}L Cr</strong>
                   </div>
                 )}
-                <div style={{ fontSize: '0.7rem', color: '#166534', fontWeight: 600 }}>Click state to view full portfolio</div>
+                <div style={{ fontSize: '0.7rem', color: '#166534', fontWeight: 600 }}>Click to inspect state dossier</div>
               </div>
             )}
 
@@ -698,26 +760,26 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               background: '#ffffff',
               border: '1px solid var(--border-gov)',
               borderRadius: '4px',
-              padding: '6px 10px',
+              padding: '8px 12px',
               fontSize: '0.7rem',
               color: '#334155',
               display: 'flex',
               flexDirection: 'column',
-              gap: '3px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
+              gap: '4px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.08)'
             }}>
-              <strong style={{ color: 'var(--gov-navy-dark)' }}>Choropleth Scale:</strong>
+              <strong style={{ color: 'var(--gov-navy-dark)' }}>Choropleth Density Scale:</strong>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '12px', height: '10px', background: '#003366', display: 'inline-block' }}></span> Very High Density (&gt;150 Proj / &gt;₹4L Cr)
+                <span style={{ width: '14px', height: '10px', background: '#003366', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> High Density (&gt;100 Proj / &gt;₹4L Cr)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '12px', height: '10px', background: '#3b82f6', display: 'inline-block' }}></span> High Density (50-100 Proj)
+                <span style={{ width: '14px', height: '10px', background: '#3b82f6', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> Medium Density (25-100 Proj)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '12px', height: '10px', background: '#93c5fd', display: 'inline-block' }}></span> Standard Density (&lt;25 Proj)
+                <span style={{ width: '14px', height: '10px', background: '#93c5fd', display: 'inline-block', border: '1px solid #cbd5e1' }}></span> Standard Density (&lt;25 Proj)
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ width: '12px', height: '10px', background: '#ff9933', display: 'inline-block' }}></span> Active Selected State
+                <span style={{ width: '14px', height: '10px', background: '#ff9933', display: 'inline-block', border: '1px solid #c2410c' }}></span> Active Selected State
               </div>
             </div>
           </div>
@@ -732,7 +794,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <MapPin size={16} color="#ff9933" />
                 <h4 style={{ color: '#ffffff', fontSize: '1rem', fontWeight: 700 }}>
-                  {activeState.name || activeState.state} • Infrastructure Profile
+                  {activeState.name || activeState.state} • {t('stateProfile', 'Infrastructure Profile')}
                 </h4>
               </div>
               <span style={{
@@ -743,7 +805,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                 padding: '2px 8px',
                 borderRadius: '3px'
               }}>
-                {activeState.count || 0} Projects Monitored
+                {activeState.count || 0} {t('projectsMonitored', 'Projects Monitored')}
               </span>
             </div>
 
@@ -760,14 +822,14 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                 marginBottom: '1rem'
               }}>
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Approved Capital Outlay</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{t('approvedOutlay', 'Approved Capital Outlay')}</div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--gov-navy-dark)' }}>
                     ₹{activeState.costLakhCr} <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Lakh Cr</span>
                   </div>
                 </div>
 
                 <div>
-                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Cumulative Expenditure</div>
+                  <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>{t('cumulativeExp', 'Cumulative Expenditure')}</div>
                   <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#166534' }}>
                     ₹{activeState.expenditureLakhCr} <span style={{ fontSize: '0.8rem', color: '#64748b' }}>Lakh Cr</span>
                   </div>
@@ -775,7 +837,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               </div>
 
               <div style={{ fontSize: '0.8rem', marginBottom: '0.8rem', color: '#334155' }}>
-                <strong>Key Sectoral Focus:</strong> <span style={{ color: 'var(--gov-navy)' }}>{activeState.topSector}</span>
+                <strong>{t('keySector', 'Key Sectoral Focus')}:</strong> <span style={{ color: 'var(--gov-navy)' }}>{activeState.topSector}</span>
               </div>
 
               {/* Projects in this State */}
@@ -839,7 +901,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                             className="gov-btn gov-btn-secondary"
                             style={{ padding: '2px 6px', fontSize: '0.65rem', marginTop: '4px', display: 'block' }}
                           >
-                            Dossier ➔
+                            {t('viewDossier', 'Dossier ➔')}
                           </button>
                         </div>
                       </div>
@@ -856,7 +918,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
               <span className="gov-card-title">
                 <Layers size={15} color="var(--gov-navy)" /> Multi-State Economic Corridors
               </span>
-              <span className="gov-badge gov-badge-navy">GatiShakti High Priority</span>
+              <span className="gov-badge gov-badge-navy">PM GatiShakti</span>
             </div>
 
             <div style={{ padding: '0.8rem 1rem', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem' }}>
@@ -876,7 +938,7 @@ export default function NationalInfrastructureMap({ onSelectProject }) {
                     <span style={{ color: '#166534', fontWeight: 700, fontFamily: 'var(--font-mono)' }}>{c.progress}</span>
                   </div>
                   <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '2px' }}>
-                    Outlay: <strong>₹{c.costCr.toLocaleString()} Cr</strong> • {c.agency} • {c.speed}
+                    Outlay: <strong>₹{c.costCr.toLocaleString()} Cr</strong> • {c.agency}
                   </div>
                 </div>
               ))}

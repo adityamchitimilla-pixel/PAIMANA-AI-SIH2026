@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   Building2, 
   Activity, 
@@ -10,20 +11,26 @@ import {
   Search, 
   Bot,
   Globe,
-  Bell
+  Bell,
+  ChevronDown
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSearch }) {
+  const { lang, setLang, languages, t, changeFontSize } = useLanguage();
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+
   const navItems = [
-    { id: 'overview', label: 'Dashboard & Overview', icon: Building2 },
-    { id: 'early-warning', label: 'AI Early Warning Radar', icon: Activity, badge: 'AI Model' },
-    { id: 'gis-map', label: 'National GIS Map', icon: MapPin, badge: 'Interactive' },
-    { id: 'projects', label: 'Projects Registry (1,981)', icon: Layers },
-    { id: 'benchmarking', label: 'Benchmarking & Drivers', icon: BarChart3 },
-    { id: 'north-east', label: 'NER Special Focus (229)', icon: MapPin },
-    { id: 'cuf-simulator', label: 'CUF & What-If Sandbox', icon: Cpu },
-    { id: 'assistant', label: 'Drishti AI Assistant', icon: Bot, badge: 'LLM' }
+    { id: 'overview', label: t('tabOverview', 'Dashboard & Overview'), icon: Building2 },
+    { id: 'early-warning', label: t('tabEarlyWarning', 'AI Early Warning Radar'), icon: Activity, badge: 'AI Model' },
+    { id: 'gis-map', label: t('tabGisMap', 'National GIS Map'), icon: MapPin, badge: 'Interactive' },
+    { id: 'projects', label: t('tabProjects', 'Projects Registry (1,981)'), icon: Layers },
+    { id: 'benchmarking', label: t('tabBenchmarking', 'Benchmarking & Drivers'), icon: BarChart3 },
+    { id: 'north-east', label: t('tabNorthEast', 'NER Special Focus (229)'), icon: MapPin },
+    { id: 'cuf-simulator', label: t('tabCuf', 'CUF & What-If Sandbox'), icon: Cpu },
+    { id: 'assistant', label: t('tabAssistant', 'Drishti AI Assistant'), icon: Bot, badge: 'LLM' }
   ];
+
+  const currentLangObj = languages.find(l => l.code === lang) || languages[0];
 
   return (
     <header style={{ display: 'flex', flexDirection: 'column', width: '100%', background: '#ffffff', borderBottom: '1px solid var(--border-gov)' }}>
@@ -51,21 +58,95 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
         }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', paddingTop: '2px' }}>
-          <span>भारत सरकार | <strong>GOVERNMENT OF INDIA</strong></span>
+          <span>{t('govOfIndia', 'GOVERNMENT OF INDIA')} | <strong>भारत सरकार</strong></span>
           <span style={{ color: '#cbd5e1' }}>|</span>
-          <span>सांख्यिकी और कार्यक्रम कार्यान्वयन मंत्रालय | <strong>Ministry of Statistics and Programme Implementation</strong></span>
+          <span>{t('ministryName', 'Ministry of Statistics and Programme Implementation')}</span>
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '2px' }}>
-          <span style={{ cursor: 'pointer' }}>Screen Reader Access</span>
+          <span style={{ cursor: 'pointer' }}>{t('screenReader', 'Screen Reader Access')}</span>
           <span>|</span>
           <div style={{ display: 'flex', gap: '4px', fontWeight: 600 }}>
-            <span style={{ cursor: 'pointer', padding: '0 2px' }}>A-</span>
-            <span style={{ cursor: 'pointer', padding: '0 2px' }}>A</span>
-            <span style={{ cursor: 'pointer', padding: '0 2px' }}>A+</span>
+            <span onClick={() => changeFontSize(-1)} style={{ cursor: 'pointer', padding: '0 3px', border: '1px solid #cbd5e1', borderRadius: '2px', background: '#ffffff' }} title="Decrease text size">A-</span>
+            <span onClick={() => changeFontSize(0)} style={{ cursor: 'pointer', padding: '0 3px', border: '1px solid #cbd5e1', borderRadius: '2px', background: '#ffffff' }} title="Default text size">A</span>
+            <span onClick={() => changeFontSize(1)} style={{ cursor: 'pointer', padding: '0 3px', border: '1px solid #cbd5e1', borderRadius: '2px', background: '#ffffff' }} title="Increase text size">A+</span>
           </div>
           <span>|</span>
-          <span style={{ cursor: 'pointer', color: 'var(--gov-blue-accent)', fontWeight: 600 }}>English / हिन्दी</span>
+          
+          {/* Multilingual Selector Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: '#ffffff',
+                border: '1px solid var(--gov-navy)',
+                borderRadius: '3px',
+                padding: '2px 8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                color: 'var(--gov-navy)',
+                cursor: 'pointer'
+              }}
+            >
+              <Globe size={12} color="var(--gov-navy)" />
+              <span>{currentLangObj.native} ({currentLangObj.label})</span>
+              <ChevronDown size={11} />
+            </button>
+
+            {isLangDropdownOpen && (
+              <div style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: '4px',
+                background: '#ffffff',
+                border: '1px solid var(--border-gov)',
+                borderRadius: '4px',
+                boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
+                zIndex: 1000,
+                minWidth: '180px',
+                maxHeight: '260px',
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column'
+              }}>
+                <div style={{ padding: '4px 8px', fontSize: '10px', background: '#f1f5f9', color: '#64748b', fontWeight: 700, borderBottom: '1px solid #e2e8f0' }}>
+                  Select Official Language (8th Schedule)
+                </div>
+                {languages.map((l) => (
+                  <button
+                    key={l.code}
+                    onClick={() => {
+                      setLang(l.code);
+                      setIsLangDropdownOpen(false);
+                    }}
+                    style={{
+                      padding: '6px 10px',
+                      textAlign: 'left',
+                      fontSize: '11px',
+                      background: lang === l.code ? '#e8f0fe' : '#ffffff',
+                      color: lang === l.code ? 'var(--gov-navy)' : '#1e293b',
+                      border: 'none',
+                      borderBottom: '1px solid #f8fafc',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      fontWeight: lang === l.code ? 700 : 400
+                    }}
+                    onMouseEnter={(e) => { if (lang !== l.code) e.currentTarget.style.background = '#f1f5f9'; }}
+                    onMouseLeave={(e) => { if (lang !== l.code) e.currentTarget.style.background = '#ffffff'; }}
+                  >
+                    <span>{l.native}</span>
+                    <span style={{ fontSize: '10px', color: '#64748b' }}>{l.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -105,20 +186,20 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--gov-navy-dark)', letterSpacing: '-0.02em' }}>
-                PAIMANA <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 500 }}>| पैमाना</span>
+                {t('portalTitle', 'PAIMANA')} <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 500 }}>| पैमाना</span>
               </h1>
               <span className="gov-badge gov-badge-navy" style={{ fontSize: '0.65rem' }}>
                 SIH26103
               </span>
               <span className="gov-badge gov-badge-low" style={{ fontSize: '0.65rem' }}>
-                486th Flash Report (April 2026)
+                {t('flashReportBadge', '486th Flash Report (April 2026)')}
               </span>
             </div>
             <p style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 500 }}>
-              Project Assessment, Infrastructure Monitoring and Analytics for Nation-building
+              {t('portalSubTitle', 'Project Assessment, Infrastructure Monitoring and Analytics for Nation-building')}
             </p>
             <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
-              Infrastructure & Project Monitoring Division (IPMD) • MoSPI
+              {t('divisionName', 'Infrastructure & Project Monitoring Division (IPMD) • MoSPI')}
             </p>
           </div>
         </div>
@@ -131,7 +212,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
             title="Search projects by ID, Name, State or Ministry"
           >
             <Search size={14} />
-            <span>Search Portal</span>
+            <span>{t('searchPortal', 'Search Portal')}</span>
           </button>
 
           <button
@@ -140,7 +221,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
             title="Generate official 486th Flash Report Dossier"
           >
             <FileText size={14} />
-            <span>486th Flash Report</span>
+            <span>{t('flashReportBtn', '486th Flash Report')}</span>
           </button>
         </div>
       </div>
@@ -210,10 +291,10 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
         gap: '8px'
       }}>
         <strong style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#78350f' }}>
-          <Bell size={12} /> FLASH NOTICE:
+          <Bell size={12} /> {t('flashNoticeTitle', 'FLASH NOTICE:')}
         </strong>
         <span>
-          As of April 2026, 1,981 Central Sector Infrastructure Projects (costing ₹150 Cr+) are under active AI predictive monitoring. Total original outlay: ₹37.13 Lakh Cr | Revised: ₹42.78 Lakh Cr.
+          {t('flashNoticeText', 'As of April 2026, 1,981 Central Sector Infrastructure Projects (costing ₹150 Cr+) are under active AI predictive monitoring.')}
         </span>
       </div>
     </header>

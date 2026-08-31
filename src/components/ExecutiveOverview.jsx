@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   PAIMANA_SUMMARY, 
   HML_CATEGORIES, 
@@ -27,6 +28,7 @@ import {
 } from 'lucide-react';
 
 export default function ExecutiveOverview({ onSelectProject, onNavigateToTab }) {
+  const { t } = useLanguage();
   const [selectedHmlCategory, setSelectedHmlCategory] = useState(null);
 
   const getHmlIcon = (catNum) => {
@@ -50,11 +52,11 @@ export default function ExecutiveOverview({ onSelectProject, onNavigateToTab }) 
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '3px' }}>
               <span className="gov-badge gov-badge-navy">Executive Summary</span>
               <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
-                486th Flash Report on Central Sector Projects (April 2026)
+                {t('flashReportBadge', '486th Flash Report on Central Sector Projects (April 2026)')}
               </span>
             </div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--gov-navy-dark)' }}>
-              National Infrastructure Monitoring Dashboard
+              {t('tabOverview', 'National Infrastructure Monitoring Dashboard')}
             </h2>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', maxWidth: '850px', marginTop: '2px' }}>
               Monthly computerized assessment of <strong>1,981 central sector projects (₹150 Cr+)</strong> across 17 Central Ministries and 22 sectors, with AI-powered predictive cost, time overrun forecasting, and early warning risk indicators.
@@ -67,21 +69,21 @@ export default function ExecutiveOverview({ onSelectProject, onNavigateToTab }) 
               className="gov-btn gov-btn-primary"
             >
               <MapPin size={14} />
-              <span>National GIS Map</span>
+              <span>{t('tabGisMap', 'National GIS Map')}</span>
             </button>
             <button 
               onClick={() => onNavigateToTab('early-warning')}
               className="gov-btn gov-btn-saffron"
             >
               <ShieldAlert size={14} />
-              <span>Early Warning Radar</span>
+              <span>{t('tabEarlyWarning', 'Early Warning Radar')}</span>
             </button>
             <button 
               onClick={() => onNavigateToTab('cuf-simulator')}
               className="gov-btn gov-btn-secondary"
             >
               <TrendingUp size={14} />
-              <span>What-If Sandbox</span>
+              <span>{t('tabCuf', 'What-If Sandbox')}</span>
             </button>
           </div>
         </div>
@@ -96,7 +98,7 @@ export default function ExecutiveOverview({ onSelectProject, onNavigateToTab }) 
         {/* Total Projects */}
         <div className="gov-card" style={{ padding: '12px 16px', borderTop: '3px solid var(--gov-navy)' }}>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>
-            Ongoing Projects
+            {t('kpiOngoingProjects', 'Ongoing Projects')}
           </div>
           <div style={{ fontSize: '1.8rem', fontWeight: 900, color: 'var(--gov-navy-dark)', margin: '2px 0' }}>
             1,981 <span style={{ fontSize: '0.9rem', color: '#64748b', fontWeight: 600 }}>| 17 Min.</span>
@@ -109,52 +111,52 @@ export default function ExecutiveOverview({ onSelectProject, onNavigateToTab }) 
         {/* Original Cost */}
         <div className="gov-card" style={{ padding: '12px 16px', borderTop: '3px solid var(--gov-navy-mid)' }}>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>
-            Original Sanctioned Cost
+            {t('kpiOriginalCost', 'Original Sanctioned Cost')}
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', margin: '2px 0' }}>
             ₹37.13 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Lakh Cr</span>
           </div>
           <div style={{ fontSize: '0.75rem', color: '#475569' }}>
-            ₹37,12,662 Crore Approved Baseline
+            {t('kpiOriginalCostSub', '₹37,12,662 Crore Approved Baseline')}
           </div>
         </div>
 
         {/* Revised Cost */}
         <div className="gov-card" style={{ padding: '12px 16px', borderTop: '3px solid #dc2626' }}>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#991b1b', fontWeight: 700 }}>
-            Latest Revised Cost
+            {t('kpiRevisedCost', 'Latest Revised Cost')}
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#dc2626', margin: '2px 0' }}>
             ₹42.78 <span style={{ fontSize: '0.85rem', color: '#991b1b' }}>Lakh Cr</span>
           </div>
           <div style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 700 }}>
-            Cost Overrun: +₹5.65 Lakh Cr (+15.2%)
+            {t('kpiCostOverrun', 'Cost Overrun: +₹5.65 Lakh Cr (+15.2%)')}
           </div>
         </div>
 
         {/* Expenditure */}
         <div className="gov-card" style={{ padding: '12px 16px', borderTop: '3px solid var(--gov-green)' }}>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#166534', fontWeight: 700 }}>
-            Cumulative Expenditure
+            {t('kpiCumulativeExpenditure', 'Cumulative Expenditure')}
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#166534', margin: '2px 0' }}>
             ₹20.36 <span style={{ fontSize: '0.85rem', color: '#166534' }}>Lakh Cr</span>
           </div>
           <div style={{ fontSize: '0.75rem', color: '#166534', fontWeight: 600 }}>
-            47.59% of Revised Cost Outlay
+            {t('kpiExpenditurePercent', '47.59% of Revised Cost Outlay')}
           </div>
         </div>
 
         {/* Scale Breakdown */}
         <div className="gov-card" style={{ padding: '12px 16px', borderTop: '3px solid #7c3aed' }}>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b', fontWeight: 700 }}>
-            Mega Projects (≥ ₹1000 Cr)
+            {t('kpiMegaProjects', 'Mega Projects (≥ ₹1000 Cr)')}
           </div>
           <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#6b21a8', margin: '2px 0' }}>
             814 <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Projects</span>
           </div>
           <div style={{ fontSize: '0.75rem', color: '#475569' }}>
-            Outlay: ₹31.63 Lakh Cr (85.2% of Total)
+            {t('kpiMegaProjectsSub', 'Outlay: ₹31.63 Lakh Cr (85.2% of Total)')}
           </div>
         </div>
       </div>
