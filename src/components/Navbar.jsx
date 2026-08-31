@@ -29,7 +29,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
     { id: 'benchmarking', label: t('tabBenchmarking', 'Benchmarking & Drivers'), icon: BarChart3 },
     { id: 'north-east', label: t('tabNorthEast', 'NER Special Focus (229)'), icon: MapPin },
     { id: 'cuf-simulator', label: t('tabCuf', 'CUF & What-If Sandbox'), icon: Cpu },
-    { id: 'assistant', label: t('tabAssistant', 'Drishti AI Assistant'), icon: Bot, badge: 'LLM' }
+    { id: 'assistant', label: t('tabAssistant', 'PAI AI Assistant'), icon: Bot, badge: 'Copilot' }
   ];
 
   const currentLangObj = languages.find(l => l.code === lang) || languages[0];

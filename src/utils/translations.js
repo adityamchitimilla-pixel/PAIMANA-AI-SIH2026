@@ -39,7 +39,7 @@ export const TRANSLATIONS = {
     tabNorthEast: "NER Special Focus (229)",
     tabCuf: "CUF & What-If Sandbox",
     tabTenders: "E-Tenders & Bidding",
-    tabAssistant: "Drishti AI Assistant",
+    tabAssistant: "PAI AI Assistant",
 
     // Executive KPIs
     kpiOngoingProjects: "Ongoing Projects",
@@ -103,7 +103,7 @@ export const TRANSLATIONS = {
     tabNorthEast: "पूर्वोत्तर विशेष फोकस (229)",
     tabCuf: "सीयूएफ और सिमुलेटर",
     tabTenders: "ई-निविदा एवं बोली",
-    tabAssistant: "दृष्टि एआई सहायक",
+    tabAssistant: "PAI AI सहायक",
 
     // Executive KPIs
     kpiOngoingProjects: "निगरानी अधीन परियोजनाएं",

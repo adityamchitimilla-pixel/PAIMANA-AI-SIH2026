@@ -8,7 +8,7 @@ import ProjectExplorer from './components/ProjectExplorer';
 import BenchmarkingAnalytics from './components/BenchmarkingAnalytics';
 import NorthEastFocus from './components/NorthEastFocus';
 import CUFSimulator from './components/CUFSimulator';
-import DrishtiAIAssistant from './components/DrishtiAIAssistant';
+import PaiAiAssistant from './components/PaiAiAssistant';
 import TendersBiddingPlatform from './components/TendersBiddingPlatform';
 import ProjectDetailModal from './components/ProjectDetailModal';
 import ReportGeneratorModal from './components/ReportGeneratorModal';
@@ -96,7 +96,7 @@ function MainAppContent() {
         )}
 
         {activeTab === 'assistant' && (
-          <DrishtiAIAssistant 
+          <PaiAiAssistant 
             onSelectProject={(p) => setSelectedProject(p)} 
           />
         )}
@@ -126,7 +126,7 @@ function MainAppContent() {
           }}
         >
           <Bot size={16} color="#ff9933" />
-          <span>{t('tabAssistant', 'Drishti AI Assistant')}</span>
+          <span>PAI AI Copilot</span>
         </button>
       )}
 
