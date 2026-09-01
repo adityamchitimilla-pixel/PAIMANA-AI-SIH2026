@@ -19,19 +19,222 @@ import {
   Building2
 } from 'lucide-react';
 
+function FormattedChatMessage({ text, isAi }) {
+  if (!text) return null;
+
+  const renderInline = (str) => {
+    const parts = [];
+    let remaining = str;
+    let keyIdx = 0;
+
+    while (remaining.length > 0) {
+      const boldMatch = remaining.match(/\*\*(.*?)\*\*/);
+      const codeMatch = remaining.match(/`(.*?)`/);
+      const italicMatch = remaining.match(/(?<!\*)\*([^*]+)\*(?!\*)/);
+
+      let firstMatch = null;
+      let matchType = null;
+      let minIndex = Infinity;
+
+      if (boldMatch && boldMatch.index < minIndex) {
+        minIndex = boldMatch.index;
+        firstMatch = boldMatch;
+        matchType = 'bold';
+      }
+      if (codeMatch && codeMatch.index < minIndex) {
+        minIndex = codeMatch.index;
+        firstMatch = codeMatch;
+        matchType = 'code';
+      }
+      if (italicMatch && italicMatch.index < minIndex) {
+        minIndex = italicMatch.index;
+        firstMatch = italicMatch;
+        matchType = 'italic';
+      }
+
+      if (firstMatch) {
+        if (firstMatch.index > 0) {
+          parts.push(<span key={keyIdx++}>{remaining.substring(0, firstMatch.index)}</span>);
+        }
+
+        if (matchType === 'bold') {
+          parts.push(
+            <strong key={keyIdx++} style={{ color: isAi ? '#0f172a' : '#ffffff', fontWeight: 700 }}>
+              {firstMatch[1]}
+            </strong>
+          );
+        } else if (matchType === 'code') {
+          parts.push(
+            <span
+              key={keyIdx++}
+              style={{
+                background: isAi ? '#e2e8f0' : 'rgba(255, 255, 255, 0.2)',
+                color: isAi ? '#0f172a' : '#ffffff',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                fontFamily: 'monospace',
+                fontSize: '0.78rem',
+                fontWeight: 600
+              }}
+            >
+              {firstMatch[1]}
+            </span>
+          );
+        } else if (matchType === 'italic') {
+          parts.push(
+            <em key={keyIdx++} style={{ color: isAi ? '#475569' : '#e2e8f0' }}>
+              {firstMatch[1]}
+            </em>
+          );
+        }
+
+        remaining = remaining.substring(firstMatch.index + firstMatch[0].length);
+      } else {
+        parts.push(<span key={keyIdx++}>{remaining}</span>);
+        break;
+      }
+    }
+
+    return parts;
+  };
+
+  const lines = text.split('\n');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', fontSize: '0.85rem', lineHeight: '1.5' }}>
+      {lines.map((line, idx) => {
+        const trimmed = line.trim();
+
+        if (!trimmed) {
+          return <div key={idx} style={{ height: '4px' }} />;
+        }
+
+        if (trimmed.startsWith('### ') || trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
+          const title = trimmed.replace(/^#+\s*/, '');
+          return (
+            <div
+              key={idx}
+              style={{
+                fontSize: '1rem',
+                fontWeight: 800,
+                color: isAi ? 'var(--gov-navy-dark)' : '#ffffff',
+                borderBottom: isAi ? '1.5px solid #e2e8f0' : '1px solid rgba(255, 255, 255, 0.2)',
+                paddingBottom: '4px',
+                marginTop: idx > 0 ? '8px' : '0px',
+                marginBottom: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              {renderInline(title)}
+            </div>
+          );
+        }
+
+        if (trimmed.startsWith('#### ')) {
+          const subtitle = trimmed.replace(/^####\s*/, '');
+          return (
+            <div
+              key={idx}
+              style={{
+                fontSize: '0.88rem',
+                fontWeight: 700,
+                color: isAi ? '#003366' : '#93c5fd',
+                marginTop: '8px',
+                marginBottom: '2px'
+              }}
+            >
+              {renderInline(subtitle)}
+            </div>
+          );
+        }
+
+        if (trimmed.startsWith('> ')) {
+          const quote = trimmed.replace(/^>\s*/, '');
+          return (
+            <div
+              key={idx}
+              style={{
+                background: isAi ? '#f8fafc' : 'rgba(255, 255, 255, 0.1)',
+                borderLeft: '4px solid #f59e0b',
+                padding: '6px 12px',
+                borderRadius: '4px',
+                fontStyle: 'italic',
+                color: isAi ? '#334155' : '#f1f5f9',
+                margin: '4px 0'
+              }}
+            >
+              {renderInline(quote)}
+            </div>
+          );
+        }
+
+        if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+          const bulletText = trimmed.replace(/^[*•-]\s*/, '');
+          const isSubItem = line.startsWith('  ') || line.startsWith('\t');
+          return (
+            <div
+              key={idx}
+              style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'flex-start',
+                paddingLeft: isSubItem ? '16px' : '2px',
+                margin: '1px 0'
+              }}
+            >
+              <span style={{ color: isAi ? '#ff9933' : '#93c5fd', fontWeight: 800, lineHeight: '1.4' }}>•</span>
+              <div style={{ flex: 1 }}>{renderInline(bulletText)}</div>
+            </div>
+          );
+        }
+
+        if (/^\d+\.\s/.test(trimmed)) {
+          const match = trimmed.match(/^(\d+\.)\s*(.*)/);
+          const num = match[1];
+          const content = match[2];
+          return (
+            <div
+              key={idx}
+              style={{
+                display: 'flex',
+                gap: '8px',
+                alignItems: 'flex-start',
+                paddingLeft: '2px',
+                margin: '2px 0'
+              }}
+            >
+              <span style={{ color: isAi ? 'var(--gov-navy)' : '#93c5fd', fontWeight: 700 }}>{num}</span>
+              <div style={{ flex: 1 }}>{renderInline(content)}</div>
+            </div>
+          );
+        }
+
+        return (
+          <div key={idx}>
+            {renderInline(trimmed)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function DrishtiAIAssistant({ onSelectProject }) {
   const [messages, setMessages] = useState([
     {
       id: '1',
       sender: 'ai',
-      text: `Welcome to **PAIMANA Drishti AI**, the official Intelligent Infrastructure Monitoring Assistant for the Ministry of Statistics & Programme Implementation (MoSPI / IPMD).
+      text: `### 🏛️ Welcome to PAIMANA Drishti AI
+I am the official Intelligent Infrastructure Monitoring Assistant for the Ministry of Statistics & Programme Implementation (MoSPI / IPMD).
 
 I have real-time query access to the **486th Flash Report dataset (April 2026)** encompassing **1,981 Central Sector Projects**, cost escalation drivers, milestone S-curves, and predictive ML forecasting models.
 
 **Suggested Official Queries:**
-- Draft an Executive Cabinet Brief on highest cost overrun mega projects
-- Identify delayed railway corridors in the North Eastern Region
-- Synthesize root-cause bottlenecks across the Roads & Highways portfolio`,
+* 📑 Draft an Executive Cabinet Brief on highest cost overrun mega projects
+* 🚆 Identify delayed railway corridors in the North Eastern Region
+* 🔍 Synthesize root-cause bottlenecks across the Roads & Highways portfolio`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -77,19 +280,19 @@ I have real-time query access to the **486th Flash Report dataset (April 2026)**
       if (lower.includes("cabinet") || lower.includes("brief") || lower.includes("executive")) {
         aiResponseText = `### 🏛️ Executive Cabinet Briefing Note: MoSPI Central Sector Monitoring (April 2026)
 
-**1. Portfolio Scale & Macro Financial Overview:**
+#### 1. Portfolio Scale & Macro Financial Overview:
 * **Total Monitored Projects:** 1,981 projects across 17 Ministries (Threshold: ₹150 Cr+)
 * **Sanctioned Cost Baseline:** ₹37.13 Lakh Crore
 * **Current Anticipated Revised Outlay:** ₹42.78 Lakh Crore
 * **Net Aggregate Cost Overrun:** **₹5.65 Lakh Crore (+15.24%)**
 * **Cumulative National Expenditure:** ₹20.36 Lakh Crore (**47.59%** disbursal rate)
 
-**2. High-Risk Critical Corridor Interventions Required:**
+#### 2. High-Risk Critical Corridor Interventions Required:
 * **Polavaram National Project (Water Resources - AP):** Cost escalation at **+447.2%** (₹55,549 Cr revised). Root cause: R&R compensations & Godavari flood diaphragm wall damages. *Action:* PMG taskforce to clear phase-1 41.15m impoundment protocol.
 * **BharatNet Phase-II (DoT):** Revised budget of ₹1,88,000 Cr (+207.6%). Physical progress (82.4%) leads financial settlement (24.7%). *Action:* Enforce GatiShakti uniform RoW portal waivers.
 * **Jiribam-Imphal Rail Link (111 km - Manipur):** Cost escalation +52.8% (₹21,885 Cr). Delayed by NATM Tunnel 12 geological mudflow. *Action:* Dedicated Territorial Army engineering security deployment.
 
-**3. Policy Directives for Line Ministries:**
+#### 3. Policy Directives for Line Ministries:
 1. Mandate **Standard CUF Stage-II clearance tracking** across all state revenue departments.
 2. Automate contractor liquidity release via escrow advance benchmarks upon achieving 80% E&M milestones.`;
       } else if (lower.includes("railway") || lower.includes("rail") || lower.includes("north east")) {
@@ -98,19 +301,19 @@ I have real-time query access to the **486th Flash Report dataset (April 2026)**
 The Ministry of Railways is actively executing 12 key rail corridors in the North Eastern Region with a revised outlay of **₹50,056 Crore**:
 
 1. **Jiribam - Imphal New Line (111 KM - Project ID: 705391)**
-   * **Original:** ₹14,323 Cr ➔ **Revised:** ₹21,885.90 Cr (**+52.8% escalation**)
-   * **Physical Progress:** 72.10% | **Delay:** +30 Months
-   * *Status:* Bridge No. 164 (141m pier) nearing superstructure launch.
+   - **Original:** ₹14,323 Cr ➔ **Revised:** ₹21,885.90 Cr (**+52.8% escalation**)
+   - **Physical Progress:** 72.10% | **Delay:** +30 Months
+   - *Status:* Bridge No. 164 (141m pier) nearing superstructure launch.
 
 2. **Sivok - Rangpo New Rail Link (45 KM - Project ID: 705432)**
-   * **Original:** ₹7,877 Cr ➔ **Revised:** ₹11,775.00 Cr (**+49.5% escalation**)
-   * **Physical Progress:** 93.00% | **Delay:** +151 Months (historical Himalayan geology & Teesta floods)
-   * *Status:* 13 of 14 tunnels successfully broken through.
+   - **Original:** ₹7,877 Cr ➔ **Revised:** ₹11,775.00 Cr (**+49.5% escalation**)
+   - **Physical Progress:** 93.00% | **Delay:** +151 Months (historical Himalayan geology & Teesta floods)
+   - *Status:* 13 of 14 tunnels successfully broken through.
 
 3. **Byrnihat - Shillong New Line (108 KM - Project ID: 705396)**
-   * **Original:** ₹8,324.28 Cr ➔ **Revised:** ₹8,342.28 Cr
-   * **Physical Progress:** 2.04%
-   * *Challenge:* Awaiting complete autonomous district council land possession.`;
+   - **Original:** ₹8,324.28 Cr ➔ **Revised:** ₹8,342.28 Cr
+   - **Physical Progress:** 2.04%
+   - *Challenge:* Awaiting complete autonomous district council land possession.`;
       } else if (lower.includes("bharatnet") || lower.includes("telecom") || lower.includes("burn")) {
         aiResponseText = `### 📡 Project Analysis: BharatNet Phase-II (Project ID: 706775)
 
@@ -121,7 +324,7 @@ The Ministry of Railways is actively executing 12 key rail corridors in the Nort
 * **Reported Physical Progress:** **82.40%**
 * **AI Progress Divergence Gap:** **57.7%** (Significant Red Flag!)
 
-**Root Cause Diagnosis:**
+#### Root Cause Diagnosis:
 1. **Scope Quadrupling:** Expanded from original Gram Panchayat (GP) optical fiber points to 2.5 lakh GP saturation including Wi-Fi choupals and institutional fiber.
 2. **Right-of-Way (RoW) Discrepancy:** Multiple state forest department demands for reinstatement charges stalled cable deployment in 12 states.
 3. **Disbursal Lag:** Concessionaire milestone validation delays have created a statistical disconnect between on-ground fiber laying (82.4%) and central fund drawdown (24.7%).`;
@@ -131,17 +334,17 @@ The Ministry of Railways is actively executing 12 key rail corridors in the Nort
 Based on empirical decomposition across 1,981 Central Sector projects, the **₹5.65 Lakh Crore** total overrun is driven by:
 
 1. **Land Acquisition Disputes & Possession Delay (34.2% share | ₹1,93,480 Cr impact)**
-   * *Average Delay:* 28.4 Months. Primary friction in dense highway corridors and irrigation submersion zones.
+   - *Average Delay:* 28.4 Months. Primary friction in dense highway corridors and irrigation submersion zones.
 2. **Forest & Environmental Stage-II Clearances (22.8% share | ₹1,29,000 Cr impact)**
-   * *Average Delay:* 22.1 Months. Wildlife sanctuary boundary modifications & NGT compliance.
+   - *Average Delay:* 22.1 Months. Wildlife sanctuary boundary modifications & NGT compliance.
 3. **Geological Surprises & Himalayan Strata (14.5% share | ₹82,030 Cr impact)**
-   * *Average Delay:* 31.5 Months. Sub-surface water ingress, thrust-fault squeezing in tunnels.
+   - *Average Delay:* 31.5 Months. Sub-surface water ingress, thrust-fault squeezing in tunnels.
 4. **Contractor Liquidity & Financial Stress (12.3% share | ₹69,580 Cr impact)**
-   * *Average Delay:* 18.2 Months. Bank guarantee constraints and raw material inflation during construction.
+   - *Average Delay:* 18.2 Months. Bank guarantee constraints and raw material inflation during construction.
 5. **Scope Enhancement & Engineering Revisions (8.6% share | ₹48,650 Cr impact)**
-   * Upgrading from 2-lane to 4-lane expressway configurations mid-execution.`;
+   - Upgrading from 2-lane to 4-lane expressway configurations mid-execution.`;
       } else {
-        aiResponseText = `### 📊 PAIMANA Official Synthesis for: *"${query}"*
+        aiResponseText = `### 📊 PAIMANA Official Synthesis for: "${query}"
 
 * **Portfolio Status (April 2026):** 1,981 Ongoing Projects tracked across 22 sectors.
 * **Top 3 Active Sectors by Value:**
@@ -167,14 +370,18 @@ You may ask for detailed project dossiers or run What-If simulations for specifi
   };
 
   const handleCopy = (id, text) => {
-    navigator.clipboard.writeText(text);
+    const cleanText = text
+      .replace(/###\s*/g, '')
+      .replace(/####\s*/g, '')
+      .replace(/\*\*/g, '')
+      .replace(/`/g, '');
+    navigator.clipboard.writeText(cleanText);
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
   };
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem 0' }}>
-      
       {/* Official Header */}
       <div className="gov-card" style={{ padding: '1.2rem 1.5rem', background: '#ffffff' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -194,10 +401,10 @@ You may ask for detailed project dossiers or run What-If simulations for specifi
             <div style={{ fontSize: '0.75rem', color: '#64748b', marginBottom: '2px' }}>
               Outcome (h) LLM-Enabled Project Intelligence Assistant
             </div>
-            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--gov-navy-dark)' }}>
+            <h2 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--gov-navy-dark)', margin: 0 }}>
               PAIMANA Drishti AI Assistant
             </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
               Natural language querying of project delays, cost escalation drivers, and automated drafting of Cabinet Executive Briefs.
             </p>
           </div>
@@ -271,11 +478,11 @@ You may ask for detailed project dossiers or run What-If simulations for specifi
                 border: isAI ? '1px solid var(--border-light)' : 'none',
                 color: isAI ? '#1e293b' : '#ffffff',
                 fontSize: '0.85rem',
-                lineHeight: '1.5'
+                lineHeight: '1.5',
+                width: '100%',
+                boxSizing: 'border-box'
               }}>
-                <div style={{ whiteSpace: 'pre-line' }}>
-                  {m.text}
-                </div>
+                <FormattedChatMessage text={m.text} isAi={isAI} />
 
                 {isAI && (
                   <div style={{

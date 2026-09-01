@@ -2,35 +2,27 @@ import React, { useState } from 'react';
 import { useLanguage } from '../context/LanguageContext';
 import { 
   Building2, 
-  Activity, 
-  Layers, 
-  BarChart3, 
-  MapPin, 
-  Cpu, 
-  FileText, 
   Search, 
-  Bot,
-  Globe,
-  Bell,
-  ChevronDown,
-  Briefcase
+  FileText, 
+  Globe, 
+  Bell, 
+  ChevronDown, 
+  LogOut, 
+  ShieldCheck, 
+  HardHat, 
+  Users, 
+  Sparkles
 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSearch }) {
+export default function Navbar({ 
+  currentRole, 
+  currentUser, 
+  onSwitchRole, 
+  onOpenReport, 
+  onOpenSearch 
+}) {
   const { lang, setLang, languages, t, changeFontSize } = useLanguage();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
-
-  const navItems = [
-    { id: 'overview', label: t('tabOverview', 'Dashboard & Overview'), icon: Building2 },
-    { id: 'early-warning', label: t('tabEarlyWarning', 'AI Early Warning Radar'), icon: Activity, badge: 'AI Model' },
-    { id: 'gis-map', label: t('tabGisMap', 'National GIS Map'), icon: MapPin, badge: 'Interactive' },
-    { id: 'projects', label: t('tabProjects', 'Projects Registry (1,981)'), icon: Layers },
-    { id: 'tenders', label: t('tabTenders', 'E-Tenders & Bidding'), icon: Briefcase, badge: 'CPPP' },
-    { id: 'benchmarking', label: t('tabBenchmarking', 'Benchmarking & Drivers'), icon: BarChart3 },
-    { id: 'north-east', label: t('tabNorthEast', 'NER Special Focus (229)'), icon: MapPin },
-    { id: 'cuf-simulator', label: t('tabCuf', 'CUF & What-If Sandbox'), icon: Cpu },
-    { id: 'assistant', label: t('tabAssistant', 'PAI AI Assistant'), icon: Bot, badge: 'Copilot' }
-  ];
 
   const currentLangObj = languages.find(l => l.code === lang) || languages[0];
 
@@ -139,8 +131,6 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
                       alignItems: 'center',
                       fontWeight: lang === l.code ? 700 : 400
                     }}
-                    onMouseEnter={(e) => { if (lang !== l.code) e.currentTarget.style.background = '#f1f5f9'; }}
-                    onMouseLeave={(e) => { if (lang !== l.code) e.currentTarget.style.background = '#ffffff'; }}
                   >
                     <span>{l.native}</span>
                     <span style={{ fontSize: '10px', color: '#64748b' }}>{l.label}</span>
@@ -164,7 +154,6 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
       }}>
         {/* National Emblem & Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {/* Ashoka Lion Emblem Representation */}
           <div style={{
             width: '46px',
             height: '46px',
@@ -187,7 +176,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
 
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--gov-navy-dark)', letterSpacing: '-0.02em' }}>
+              <h1 style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--gov-navy-dark)', letterSpacing: '-0.02em', margin: 0 }}>
                 {t('portalTitle', 'PAIMANA')} <span style={{ fontSize: '1rem', color: '#64748b', fontWeight: 500 }}>| पैमाना</span>
               </h1>
               <span className="gov-badge gov-badge-navy" style={{ fontSize: '0.65rem' }}>
@@ -197,96 +186,117 @@ export default function Navbar({ activeTab, setActiveTab, onOpenReport, onOpenSe
                 {t('flashReportBadge', '486th Flash Report (April 2026)')}
               </span>
             </div>
-            <p style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 500 }}>
+            <p style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 500, margin: 0 }}>
               {t('portalSubTitle', 'Project Assessment, Infrastructure Monitoring and Analytics for Nation-building')}
             </p>
-            <p style={{ fontSize: '0.75rem', color: '#64748b' }}>
+            <p style={{ fontSize: '0.75rem', color: '#64748b', margin: 0 }}>
               {t('divisionName', 'Infrastructure & Project Monitoring Division (IPMD) • MoSPI')}
             </p>
           </div>
         </div>
 
-        {/* Search & Official Report Buttons */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
-            onClick={onOpenSearch}
-            className="gov-btn gov-btn-secondary"
-            title="Search projects by ID, Name, State or Ministry"
-          >
-            <Search size={14} />
-            <span>{t('searchPortal', 'Search Portal')}</span>
-          </button>
+        {/* Right Section: Session Pill & Quick Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {currentUser ? (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              background: currentRole === 'govt' ? '#eff6ff' : currentRole === 'tender' ? '#fffbeb' : '#ecfdf5',
+              border: `1px solid ${currentRole === 'govt' ? '#bfdbfe' : currentRole === 'tender' ? '#fde68a' : '#a7f3d0'}`,
+              borderRadius: '6px',
+              padding: '6px 12px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {currentRole === 'govt' && <ShieldCheck size={16} color="#1d4ed8" />}
+                {currentRole === 'tender' && <HardHat size={16} color="#d97706" />}
+                {currentRole === 'citizen' && <Users size={16} color="#059669" />}
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <span style={{ fontSize: '0.72rem', fontWeight: 700, color: currentRole === 'govt' ? '#1e40af' : currentRole === 'tender' ? '#92400e' : '#065f46' }}>
+                    {currentUser.name || currentUser.companyName}
+                  </span>
+                  <span style={{ fontSize: '0.65rem', color: '#64748b' }}>
+                    {currentRole === 'govt' ? 'MoSPI Official' : currentRole === 'tender' ? 'CPPP Bidder' : 'Verified Citizen'}
+                  </span>
+                </div>
+              </div>
 
-          <button
-            onClick={onOpenReport}
-            className="gov-btn gov-btn-primary"
-            title="Generate official 486th Flash Report Dossier"
-          >
-            <FileText size={14} />
-            <span>{t('flashReportBtn', '486th Flash Report')}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 3. Official Navy Blue Navigation Bar */}
-      <nav style={{
-        background: 'var(--gov-navy)',
-        borderTop: '3px solid var(--gov-saffron)',
-        display: 'flex',
-        alignItems: 'center',
-        padding: '0 1rem',
-        overflowX: 'auto'
-      }}>
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
-          return (
+              <button
+                onClick={onSwitchRole}
+                title="Switch Role / Return to Gateway"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  background: '#ffffff',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '4px',
+                  padding: '4px 8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  color: '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease'
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--gov-navy)'; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = '#cbd5e1'; }}
+              >
+                <LogOut size={12} />
+                <span>Switch Role</span>
+              </button>
+            </div>
+          ) : (
             <button
-              key={item.id}
-              onClick={() => setActiveTab(item.id)}
+              onClick={onSwitchRole}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                padding: '10px 14px',
-                fontSize: '0.85rem',
-                fontWeight: isActive ? 700 : 500,
+                background: 'var(--gov-navy)',
                 color: '#ffffff',
-                background: isActive ? 'var(--gov-navy-dark)' : 'transparent',
                 border: 'none',
-                borderBottom: isActive ? '3px solid #ff9933' : '3px solid transparent',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'background 0.15s ease'
+                borderRadius: '6px',
+                padding: '6px 12px',
+                fontSize: '0.75rem',
+                fontWeight: 700,
+                cursor: 'pointer'
               }}
-              onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--gov-navy-mid)'; }}
-              onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
             >
-              <Icon size={15} color={isActive ? '#ff9933' : '#ffffff'} />
-              <span>{item.label}</span>
-              {item.badge && (
-                <span style={{
-                  fontSize: '0.65rem',
-                  padding: '1px 5px',
-                  borderRadius: '3px',
-                  background: isActive ? '#ff9933' : 'rgba(255, 255, 255, 0.2)',
-                  color: isActive ? '#000000' : '#ffffff',
-                  fontWeight: 700
-                }}>
-                  {item.badge}
-                </span>
-              )}
+              <Users size={14} />
+              <span>Select Role</span>
             </button>
-          );
-        })}
-      </nav>
+          )}
 
-      {/* 4. Official Notice / Ticker Bar */}
+          {/* Search Button */}
+          <button
+            onClick={onOpenSearch}
+            className="gov-btn gov-btn-secondary"
+            title="Search projects by ID, Name, State or Ministry (Ctrl+K)"
+            style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+          >
+            <Search size={14} />
+            <span>Search</span>
+          </button>
+
+          {/* Official Dossier Button */}
+          <button
+            onClick={onOpenReport}
+            className="gov-btn gov-btn-primary"
+            title="Generate official 486th Flash Report Dossier"
+            style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+          >
+            <FileText size={14} />
+            <span>Flash Report</span>
+          </button>
+        </div>
+      </div>
+
+      {/* 3. Official Flash Notice / Ticker */}
       <div style={{
         background: '#fef3c7',
         borderBottom: '1px solid #fde68a',
-        padding: '5px 1.5rem',
-        fontSize: '0.75rem',
+        padding: '4px 1.5rem',
+        fontSize: '0.72rem',
         color: '#92400e',
         display: 'flex',
         alignItems: 'center',

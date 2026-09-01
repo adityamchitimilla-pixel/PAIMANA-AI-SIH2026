@@ -1,19 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useLanguage } from '../context/LanguageContext';
+import './PaiAiAssistant.css';
 import { 
   DETAILED_PROJECTS, 
   PAIMANA_SUMMARY, 
   ESCALATION_DRIVERS, 
-  NORTH_EAST_SUMMARY,
-  STATES_SUMMARY,
-  HML_CATEGORIES
-} from '../data/paimanaData';
-import { TENDERS_DATA } from '../data/tendersData';
-import { 
-  queryGeminiApi, 
-  querySmartLocalEngine, 
-  DEFAULT_GEMINI_API_KEY 
-} from '../utils/geminiAiService';
+  STATES_SUMMARY 
+} from './data/paimanaData';
+import { TENDERS_DATA } from './data/tendersData';
 import { 
   Bot, 
   Send, 
@@ -22,21 +15,12 @@ import {
   Copy, 
   Check, 
   HelpCircle,
-  AlertTriangle,
-  Flame,
-  ShieldCheck,
-  TrendingUp,
-  Clock,
-  DollarSign,
-  Building2,
-  KeyRound,
-  CheckCircle2
+  KeyRound
 } from 'lucide-react';
 
-/**
- * Beautiful, clean text formatter for PAI AI messages
- * Replaces raw markdown symbols (###, ####, **, `, >) with elegant UI components.
- */
+// Default Gemini API Key (Loaded securely from environment or UI input)
+export const DEFAULT_GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+
 function FormattedChatMessage({ text, isAi }) {
   if (!text) return null;
 
@@ -239,12 +223,18 @@ function FormattedChatMessage({ text, isAi }) {
   );
 }
 
-export default function PaiAiAssistant({ onSelectProject }) {
-  const { t } = useLanguage();
-  const [apiKey, setApiKey] = useState(DEFAULT_GEMINI_API_KEY);
-  const [showKeyConfig, setShowKeyConfig] = useState(false);
-  const [engineMode, setEngineMode] = useState('Gemini 2.5 Flash (MoSPI RAG)');
+export default function PaiAiAssistant({ 
+  onSelectProject,
+  onCustomQuery,
+  customTendersData,
+  customProjectsData,
+  customStatesData
+}) {
+  const tendersList = customTendersData || TENDERS_DATA;
+  const projectsList = customProjectsData || DETAILED_PROJECTS;
+  const statesList = customStatesData || STATES_SUMMARY;
 
+  const [apiKey, setApiKey] = useState(DEFAULT_GEMINI_API_KEY);
   const [messages, setMessages] = useState([
     {
       id: '1',
@@ -300,17 +290,61 @@ I am your intelligent assistant for **National Infrastructure Intelligence & Cen
 
     try {
       let aiResponseText = '';
-      
-      // Step 1: Try Gemini API
-      try {
-        aiResponseText = await queryGeminiApi(query, apiKey);
-        setEngineMode('Gemini 2.5 Flash (MoSPI RAG Live)');
-      } catch (geminiError) {
-        console.warn("Gemini API call failed, falling back to smart local dataset engine:", geminiError.message);
-        // Step 2: Fallback to smart local dataset parser
-        await new Promise(resolve => setTimeout(resolve, 350));
-        aiResponseText = querySmartLocalEngine(query);
-        setEngineMode('PAIMANA Neural Engine (Local Dataset)');
+      if (onCustomQuery) {
+        aiResponseText = await onCustomQuery(query);
+      } else {
+        // Smart programmatic filter engine
+        const q = query.toLowerCase();
+
+        if (q.includes("tender") || q.includes("bid")) {
+          let targetStatus = null;
+          if (q.includes("upcoming")) targetStatus = "upcoming";
+          else if (q.includes("ongoing")) targetStatus = "ongoing";
+          else if (q.includes("completed")) targetStatus = "completed";
+
+          let maxBudget = null;
+          const underMatch = q.match(/(?:under|below|less than|within|max|<|<=)\s*(?:₹|rs\.?)?\s*(\d+(?:\.\d+)?)\s*(?:cr|crore)?/i);
+          if (underMatch) maxBudget = parseFloat(underMatch[1]);
+
+          const filtered = tendersList.filter(t => {
+            if (targetStatus && t.status !== targetStatus) return false;
+            if (maxBudget !== null && t.estimatedCostCr > maxBudget) return false;
+            return true;
+          });
+
+          if (filtered.length > 0) {
+            let res = `### 📋 Matching Tenders (${targetStatus ? targetStatus.toUpperCase() : 'ALL'} | ${maxBudget ? `< ₹${maxBudget} Cr` : ''})\n\n`;
+            filtered.forEach((t, idx) => {
+              res += `#### ${idx + 1}. ${t.title}\n`;
+              res += `* **Tender ID:** \`${t.id}\` | **Agency:** **${t.agency}** (${t.ministry})\n`;
+              res += `* **Estimated Cost:** **₹${t.estimatedCostCr.toLocaleString()} Crore** | **EMD:** ₹${t.emdAmountCr} Cr\n`;
+              res += `* **Location:** 📍 ${t.location}\n`;
+              if (t.status === 'upcoming') {
+                res += `* **Pre-Bid Meeting:** ${t.preBidMeetingDate} | **Expected Launch:** ${t.expectedBidOpening}\n\n`;
+              } else {
+                res += `* **Closing Date:** ${t.bidClosingDate ? t.bidClosingDate.replace('T', ' ') : 'Open'}\n\n`;
+              }
+            });
+            aiResponseText = res;
+          }
+        }
+
+        if (!aiResponseText) {
+          await new Promise(r => setTimeout(r, 400));
+          if (q.includes("risk") || q.includes("critical")) {
+            const criticals = projectsList.filter(p => p.riskLevel === 'Critical' || p.riskLevel === 'High');
+            let res = `### 🚨 In-Progress High-Risk Projects\n\n`;
+            criticals.forEach((p, idx) => {
+              res += `#### ${idx + 1}. ${p.name}\n`;
+              res += `* **ID:** \`${p.id}\` | **Agency:** ${p.agency} (${p.ministry})\n`;
+              res += `* **Risk:** 🔴 ${p.riskLevel} (${p.riskScore}/100) | **Progress:** ${p.physicalProgress}%\n`;
+              res += `* **Cost:** Sanctioned ₹${p.originalCostCr} Cr ➔ Revised **₹${p.revisedCostCr} Cr**\n\n`;
+            });
+            aiResponseText = res;
+          } else {
+            aiResponseText = `### 💡 PAI AI Synthesis for: "${query}"\n\n1,981 central sector projects and 7 active tender packages are indexed in the PAIMANA Flash Report database.`;
+          }
+        }
       }
 
       const aiMessage = {
@@ -321,14 +355,7 @@ I am your intelligent assistant for **National Infrastructure Intelligence & Cen
       };
       setMessages(prev => [...prev, aiMessage]);
     } catch (err) {
-      console.error("Critical error generating AI response:", err);
-      const fallbackMsg = {
-        id: (Date.now() + 1).toString(),
-        sender: 'ai',
-        text: querySmartLocalEngine(query),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      setMessages(prev => [...prev, fallbackMsg]);
+      console.error("Error generating AI response:", err);
     } finally {
       setIsTyping(false);
     }
@@ -346,111 +373,36 @@ I am your intelligent assistant for **National Infrastructure Intelligence & Cen
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem', padding: '1rem 0' }}>
-      
+    <div className="pai-ai-container">
       {/* Official Top Assistant Header */}
       <div className="gov-card" style={{ padding: '1.2rem 1.5rem', background: '#ffffff', borderRadius: '8px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
               <span className="gov-badge gov-badge-navy" style={{ fontSize: '0.7rem' }}>Gemini LLM Copilot</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Real-Time Flash Report & CPPP Tenders Grounding</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Real-Time Flash Report & CPPP Tenders Integration</span>
             </div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: 'var(--gov-navy-dark)', letterSpacing: '-0.02em', display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
               <Bot size={24} color="#ff9933" />
               <span>PAI AI Infrastructure & Tendering Assistant</span>
             </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px', margin: 0 }}>
-              Natural language intelligence for tenders under specific budgets, high-risk projects, and MoSPI flash report analytics.
-            </p>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <div style={{
-              background: '#f8fafc',
-              border: '1px solid #e2e8f0',
-              borderRadius: '6px',
-              padding: '8px 14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '0.78rem',
-              color: '#334155'
-            }}>
-              <Sparkles size={16} color="var(--gov-navy)" />
-              <span>Engine: <strong>{engineMode}</strong></span>
-            </div>
-
-            <button
-              onClick={() => setShowKeyConfig(!showKeyConfig)}
-              style={{
-                background: '#ffffff',
-                border: '1px solid #cbd5e1',
-                borderRadius: '6px',
-                padding: '8px 12px',
-                fontSize: '0.78rem',
-                color: '#475569',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-              title="Configure Gemini API Key"
-            >
-              <KeyRound size={14} color="#d97706" />
-              <span>API Key</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Optional Collapsible API Key Bar */}
-        {showKeyConfig && (
           <div style={{
-            marginTop: '1rem',
-            padding: '10px 14px',
-            background: '#fffbeb',
-            border: '1px solid #fde68a',
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
             borderRadius: '6px',
+            padding: '8px 14px',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
-            flexWrap: 'wrap'
+            gap: '8px',
+            fontSize: '0.78rem',
+            color: '#334155'
           }}>
-            <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#92400e' }}>
-              Gemini API Key:
-            </span>
-            <input
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="Paste Gemini API Key (e.g. AIzaSy...)"
-              style={{
-                flex: 1,
-                minWidth: '220px',
-                padding: '6px 10px',
-                fontSize: '0.8rem',
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                outline: 'none'
-              }}
-            />
-            <button
-              onClick={() => setShowKeyConfig(false)}
-              style={{
-                padding: '6px 12px',
-                background: '#059669',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '0.78rem',
-                fontWeight: 700,
-                cursor: 'pointer'
-              }}
-            >
-              Save Key
-            </button>
+            <Sparkles size={16} color="var(--gov-navy)" />
+            <span>AI Knowledge Engine: <strong>486th Flash Report & CPPP Tenders</strong></span>
           </div>
-        )}
+        </div>
 
         {/* Quick Suggestion Chips */}
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', marginTop: '1rem', paddingTop: '0.8rem', borderTop: '1px solid #f1f5f9' }}>
@@ -469,16 +421,7 @@ I am your intelligent assistant for **National Infrastructure Intelligence & Cen
                 border: '1px solid #e2e8f0',
                 color: '#334155',
                 cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                transition: 'all 0.15s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#e8f0fe';
-                e.currentTarget.style.borderColor = 'var(--gov-navy)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = '#f8fafc';
-                e.currentTarget.style.borderColor = '#e2e8f0';
+                whiteSpace: 'nowrap'
               }}
             >
               {prompt}
@@ -489,9 +432,7 @@ I am your intelligent assistant for **National Infrastructure Intelligence & Cen
 
       {/* Main Chat Interface */}
       <div className="gov-card" style={{ display: 'flex', flexDirection: 'column', height: '640px', background: '#ffffff', borderRadius: '8px', overflow: 'hidden' }}>
-        
-        {/* Messages Scroll Area */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem', background: '#f8fafc' }}>
+        <div className="pai-ai-scroll" style={{ flex: 1, overflowY: 'auto', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem', background: '#f8fafc' }}>
           {messages.map((m) => {
             const isAi = m.sender === 'ai';
             return (
@@ -506,75 +447,34 @@ I am your intelligent assistant for **National Infrastructure Intelligence & Cen
                   flexDirection: isAi ? 'row' : 'row-reverse'
                 }}
               >
-                {/* Avatar Icon */}
-                <div style={{
-                  width: '36px',
-                  height: '36px',
-                  borderRadius: '50%',
-                  background: isAi ? 'var(--gov-navy)' : '#e2e8f0',
-                  color: isAi ? '#ff9933' : '#0f172a',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  boxShadow: '0 2px 6px rgba(0,0,0,0.1)'
-                }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: isAi ? 'var(--gov-navy)' : '#e2e8f0', color: isAi ? '#ff9933' : '#0f172a', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   {isAi ? <Bot size={20} /> : <User size={18} />}
                 </div>
 
-                {/* Message Bubble */}
                 <div style={{
                   background: isAi ? '#ffffff' : 'var(--gov-navy)',
                   color: isAi ? '#1e293b' : '#ffffff',
                   padding: '1.1rem 1.4rem',
                   borderRadius: '10px',
                   border: isAi ? '1px solid #e2e8f0' : 'none',
-                  boxShadow: isAi ? '0 2px 8px rgba(0,0,0,0.04)' : '0 2px 8px rgba(0, 34, 68, 0.2)',
                   fontSize: '0.85rem',
                   lineHeight: '1.5',
                   position: 'relative',
                   width: '100%',
                   boxSizing: 'border-box'
                 }}>
-                  {/* Sender Name & Timestamp */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '0.72rem', color: isAi ? '#64748b' : '#cbd5e1' }}>
-                    <strong style={{ color: isAi ? 'var(--gov-navy-dark)' : '#ffffff' }}>
-                      {isAi ? 'PAI AI Copilot' : 'User'}
-                    </strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '0.72rem', color: isAi ? '#64748b' : '#cbd5e1' }}>
+                    <strong>{isAi ? 'PAI AI Copilot' : 'User'}</strong>
                     <span>{m.timestamp}</span>
                   </div>
 
-                  {/* Clean Formatted Message Content without raw symbols */}
                   <FormattedChatMessage text={m.text} isAi={isAi} />
 
-                  {/* Copy Response Button for AI messages */}
                   {isAi && (
                     <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px', paddingTop: '6px', borderTop: '1px solid #f1f5f9' }}>
-                      <button
-                        onClick={() => handleCopy(m.id, m.text)}
-                        style={{
-                          background: 'transparent',
-                          border: 'none',
-                          color: '#64748b',
-                          fontSize: '0.72rem',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px',
-                          padding: '2px 6px'
-                        }}
-                      >
-                        {copiedId === m.id ? (
-                          <>
-                            <Check size={12} color="#16a34a" />
-                            <span style={{ color: '#16a34a', fontWeight: 600 }}>Copied to clipboard!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Copy size={12} />
-                            <span>Copy response</span>
-                          </>
-                        )}
+                      <button onClick={() => handleCopy(m.id, m.text)} style={{ background: 'transparent', border: 'none', color: '#64748b', fontSize: '0.72rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        {copiedId === m.id ? <Check size={12} color="#16a34a" /> : <Copy size={12} />}
+                        <span>{copiedId === m.id ? 'Copied!' : 'Copy response'}</span>
                       </button>
                     </div>
                   )}
@@ -590,62 +490,27 @@ I am your intelligent assistant for **National Infrastructure Intelligence & Cen
               </div>
               <div style={{ background: '#ffffff', padding: '10px 16px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.8rem', color: '#64748b', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <Sparkles size={14} color="#ff9933" />
-                <span>PAI AI is analyzing Flash Report & Tenders database with Gemini...</span>
+                <span>PAI AI is analyzing Flash Report & Tenders database...</span>
               </div>
             </div>
           )}
-
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input Bar */}
         <div style={{ padding: '1rem 1.5rem', background: '#ffffff', borderTop: '1px solid #e2e8f0' }}>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              handleSendMessage();
-            }}
-            style={{ display: 'flex', gap: '10px', alignItems: 'center' }}
-          >
+          <form onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }} style={{ display: 'flex', gap: '10px' }}>
             <input
               type="text"
               placeholder="Ask PAI AI: 'what are the upcoming tenders requiring budget under 1000 cr', 'high risk projects'..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '10px 14px',
-                fontSize: '0.85rem',
-                border: '1.5px solid #cbd5e1',
-                borderRadius: '6px',
-                outline: 'none',
-                transition: 'border-color 0.15s ease'
-              }}
-              onFocus={(e) => e.target.style.borderColor = 'var(--gov-navy)'}
-              onBlur={(e) => e.target.style.borderColor = '#cbd5e1'}
+              style={{ flex: 1, padding: '10px 14px', fontSize: '0.85rem', border: '1.5px solid #cbd5e1', borderRadius: '6px', outline: 'none' }}
             />
-
-            <button
-              type="submit"
-              disabled={!input.trim()}
-              className="gov-btn gov-btn-primary"
-              style={{
-                padding: '10px 20px',
-                fontSize: '0.85rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                opacity: input.trim() ? 1 : 0.6,
-                cursor: input.trim() ? 'pointer' : 'not-allowed'
-              }}
-            >
+            <button type="submit" disabled={!input.trim()} className="gov-btn gov-btn-primary">
               <span>Ask PAI AI</span>
               <Send size={15} />
             </button>
           </form>
-          <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginTop: '6px', textAlign: 'center' }}>
-            PAI AI integrates Google Gemini LLM with the 486th Flash Report dataset and CPPP E-Procurement records.
-          </div>
         </div>
       </div>
     </div>
